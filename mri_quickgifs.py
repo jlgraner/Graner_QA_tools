@@ -112,6 +112,28 @@ def temp_mean(input_nii, output_dir):
     return output_file
 
 
+def temp_cut(input_nii, output_dir):
+    
+    input_prefix, extension = _get_niiprefext(input_nii)
+    if (input_prefix == None) or (extension == None):
+        print('Error getting input file prefix and/or extension!')
+        return None
+    suffix = '_cut'
+
+    #Put together output image
+    output_file = os.path.join(output_dir, input_prefix+suffix+extension)
+
+    ##TODO: DELETE IMAGE IF IT ALREADY EXISTS
+
+    #Put together call to create mean image
+    call_parts = ['3dTcat', '-prefix', output_file, input_nii+'[4..$]']
+    error_flag = subprocess.call(call_parts)
+    if error_flag:
+        print('TR cut failed: {}'.string.join(call_parts))
+        return None
+    return output_file
+    
+
 def temp_snr(input_mean, input_stdev, output_dir):
     #TODO: Check input image format
     mean_prefix, mean_extension = _get_niiprefext(input_mean)
@@ -239,7 +261,6 @@ def main(args):
         print('Creating output directory: {}'.format(output_dir))
         os.mkdir(output_dir)
 
-
     #Set some output subdirectories and create them if they're not there
     image_output_dir = os.path.join(output_dir, 'images')
     picgifs_output_dir = os.path.join(output_dir, 'pictures_gifs')
@@ -273,6 +294,14 @@ def main(args):
         print('Input Stdev image: {}'.format(stdev_nii))
         raise RuntimeError
 
+    #Create version of input image with first 4 timepoints removed
+    print('Cutting first 4 timepoints...')
+    cut_nii = temp_cut(input_func_data, image_output_dir)
+    if cut_nii is None:
+        print('Error creating shorter input image!')
+        print('Input file: {}'.format(input_func_data))
+        raise RuntimeError
+
     ##Create gifs that go through the center slices at each timepoint##
     #Read in nifti as a nibabel image
     img = nib.load(input_func_data)
@@ -292,40 +321,13 @@ def main(args):
     center_y_image = img_data[:, center_y, :, :]
     center_z_image = img_data[:, :, center_z, :]
 
+    #Get the input image prefix
+    input_prefix = os.path.split(input_func_data)[-1].split('.nii')[0]
+
     #Create gifs through time
-    center_x_gif = arr_to_gif(center_x_image, 3, picgifs_output_dir, 'center_x')
-    center_y_gif = arr_to_gif(center_y_image, 3, picgifs_output_dir, 'center_y')
-    center_z_gif = arr_to_gif(center_z_image, 3, picgifs_output_dir, 'center_z')
-
-    # #Rescale each group of center slices to 0-255
-    # #This process also squeezes the arrays down to 3 dimensions
-    # center_x_image = _grayscale_conv(center_x_image)
-    # center_y_image = _grayscale_conv(center_y_image)
-    # center_z_image = _grayscale_conv(center_z_image)
-
-    # #For each of the three dimensions, for each timepoint in that dimension,
-    # #extract the slice and create a formatted PIL Image version of it
-    # dim_count = 0
-    # for subset in [center_x_image, center_y_image, center_z_image]:
-    #     slice_files = []
-    #     #Create a temporary png file of the center slice at each timepoint
-    #     for slice_num in range(subset.shape[2]):
-    #         this_slice = subset[:,:,slice_num]
-    #         slice_to_write = _format_picture(this_slice)
-    #         slice_to_write.save(os.path.join(picgifs_output_dir, 'temp_slice_gif_{}_{}.png'.format(dim_count,slice_num)))
-    #         slice_files.append(os.path.join(picgifs_output_dir, 'temp_slice_gif_{}_{}.png'.format(dim_count,slice_num)))
-    #     #Create a gif of the center slice pictures
-    #     images = []
-    #     for filename in slice_files:
-    #         images.append(imageio.imread(filename))
-    #     output_gif = os.path.join(picgifs_output_dir, 'center_slice_gif_{}.gif'.format(dim_count))
-    #     print(output_gif)
-    #     imageio.mimsave(output_gif, images, duration=0.2)
-    #     #Delete pngs
-    #     for filename in slice_files:
-    #         try_delete(filename)
-    #     dim_count = dim_count + 1
-    ##
+    center_x_gif = arr_to_gif(center_x_image, 3, picgifs_output_dir, '{}_center_x'.format(input_prefix))
+    center_y_gif = arr_to_gif(center_y_image, 3, picgifs_output_dir, '{}_center_y'.format(input_prefix))
+    center_z_gif = arr_to_gif(center_z_image, 3, picgifs_output_dir, '{}_center_z'.format(input_prefix))
 
     ##Create gifs going through the mean image in each dimension
     mean_gif_one = niithree_to_gif(mean_nii, 1, picgifs_output_dir)
