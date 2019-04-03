@@ -132,7 +132,7 @@ def temp_cut(input_nii, output_dir):
         print('TR cut failed: {}'.string.join(call_parts))
         return None
     return output_file
-    
+
 
 def temp_snr(input_mean, input_stdev, output_dir):
     #TODO: Check input image format
@@ -302,6 +302,31 @@ def main(args):
         print('Input file: {}'.format(input_func_data))
         raise RuntimeError
 
+    #Create temporal standard deviation of cut image
+    print('Creating temporal standard deviation of short image...')
+    cut_stdev_nii = temp_stdev(cut_nii, image_output_dir)
+    if cut_stdev_nii is None:
+        print('Error creating standard deviation of cut image!')
+        print('Input file: {}'.format(cut_nii))
+        raise RuntimeError
+
+    #Create temporal mean of cut image
+    print('Creating temporal mean of short image...')
+    cut_mean_nii = temp_mean(cut_nii, image_output_dir)
+    if cut_mean_nii is None:
+        print('Error creating mean of short image!')
+        print('Input file: {}'.format(cut_nii))
+        raise RuntimeError
+
+    #Create temporal SNR of cut image
+    print('Creating temporal SNR of short image...')
+    cut_snr_nii = temp_snr(cut_mean_nii, cut_stdev_nii, image_output_dir)
+    if cut_snr_nii is None:
+        print('Error creating temporal SNR of short image!')
+        print('Input Mean image: {}'.format(cut_mean_nii))
+        print('Input Stdev image: {}'.format(cut_stdev_nii))
+        raise RuntimeError
+
     ##Create gifs that go through the center slices at each timepoint##
     #Read in nifti as a nibabel image
     img = nib.load(input_func_data)
@@ -344,10 +369,29 @@ def main(args):
     snr_gif_two = niithree_to_gif(snr_nii, 2, picgifs_output_dir)
     snr_gif_three = niithree_to_gif(snr_nii, 3, picgifs_output_dir)
 
+    #Create gifs going through the short mean image
+    cut_mean_gif_one = niithree_to_gif(cut_mean_nii, 1, picgifs_output_dir)
+    cut_mean_gif_two = niithree_to_gif(cut_mean_nii, 2, picgifs_output_dir)
+    cut_mean_gif_three = niithree_to_gif(cut_mean_nii, 3, picgifs_output_dir)
+
+    #Create gifs going through the short stdev image
+    cut_stdev_gif_one = niithree_to_gif(cut_stdev_nii, 1, picgifs_output_dir)
+    cut_stdev_gif_two = niithree_to_gif(cut_stdev_nii, 2, picgifs_output_dir)
+    cut_stdev_gif_three = niithree_to_gif(cut_stdev_nii, 3, picgifs_output_dir)
+
+    #Create gifs going through the short snr image
+    cut_snr_gif_one = niithree_to_gif(cut_snr_nii, 1, picgifs_output_dir)
+    cut_snr_gif_two = niithree_to_gif(cut_snr_nii, 2, picgifs_output_dir)
+    cut_snr_gif_three = niithree_to_gif(cut_snr_nii, 3, picgifs_output_dir)
+
     #Delete the mean image, the stdev image, and the SNR image
     try_delete(mean_nii)
     try_delete(stdev_nii)
     try_delete(snr_nii)
+    try_delete(cut_nii)
+    try_delete(cut_mean_nii)
+    try_delete(cut_stdev_nii)
+    try_delete(cut_snr_nii)
 
 
 if __name__ is "__main__":
