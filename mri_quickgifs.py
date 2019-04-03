@@ -148,6 +148,55 @@ def _format_base_output_dir(dir_to_test, quickgifs_dir):
     return os.path.join(dir_to_test, quickgifs_dir)
 
 
+def _create_slices_gif(input_nii, slice_dim, output_dir):
+    #NOTE: this function assumes the input image has 3 dimensions
+
+    #Make sure the input image exists
+    if not os.path.exists(input_nii):
+        print('Input nii cannot be found: {} -- _create_slices_gif()'.format(input_nii))
+        return None
+
+    #Read in mean nifti image as a nibabel image and get data
+    img = nib.load(input_nii)
+    img_data = img.get_data()
+
+    #Scale the image to 0-255
+    img_data = _grayscale_conv(img_data)
+
+    #Transpose the data so we can always create slices along the
+    #first dimension of the array.
+    transpose_array = np.arange(3)
+    transpose_array = np.roll(transpose_array, slice_dim-1)
+
+    data_to_slice = img_data.transpose(transpose_array)
+    num_slices = data_to_slice.shape[0]
+
+    #Create pictures of each slice
+    slice_files = []
+    for slice_num in range(num_slices):
+        slice_data = data_to_slice[slice_num,:,:]
+        slice_to_write = _format_picture(slice_data)
+        slice_outfile = os.path.join(output_dir, 'temp_slice_gif_{}.png'.format(slice_num))
+        slice_to_write.save(slice_outfile)
+        slice_files.append(slice_outfile)
+    #Create a gif of the center slice pictures
+    images = []
+    for filename in slice_files:
+        images.append(imageio.imread(filename))
+    output_gif_prefix = os.path.split(input_nii)[-1].split('.nii')[0]
+    output_gif = os.path.join(output_dir, '{prefix}_{dim}.gif'.format(prefix=output_gif_prefix,dim=slice_dim))
+    print(output_gif)
+    imageio.mimsave(output_gif, images, duration=0.2)
+    #Delete pngs
+    for filename in slice_files:
+        try_delete(filename)
+    return output_gif
+
+def try_delete(file_to_go):
+    if os.path.exists(file_to_go):
+        os.remove(file_to_go)
+
+
 def main(args):
 
     #Variable for this script's output directory
@@ -216,6 +265,7 @@ def main(args):
         print('Input Stdev image: {}'.format(stdev_nii))
         raise RuntimeError
 
+    ##Create gifs that go through the center slices at each timepoint##
     #Read in nifti as a nibabel image
     img = nib.load(input_func_data)
 
@@ -258,13 +308,31 @@ def main(args):
         output_gif = os.path.join(picgifs_output_dir, 'center_slice_gif_{}.gif'.format(dim_count))
         print(output_gif)
         imageio.mimsave(output_gif, images, duration=0.2)
+        #Delete pngs
+        for filename in slice_files:
+            try_delete(filename)
         dim_count = dim_count + 1
+    ##
 
+    ##Create gifs going through the mean image in each dimension
+    mean_gif_one = _create_slices_gif(mean_nii, 1, picgifs_output_dir)
+    mean_gif_two = _create_slices_gif(mean_nii, 2, picgifs_output_dir)
+    mean_gif_three = _create_slices_gif(mean_nii, 3, picgifs_output_dir)
 
-    #Create gif going through mean image axially
-    #Create gif going through mean image saggitally
-    #Create gif going through mean image coronally
+    #Create gifs going through the stdev image
+    stdev_gif_one = _create_slices_gif(stdev_nii, 1, picgifs_output_dir)
+    stdev_gif_two = _create_slices_gif(stdev_nii, 2, picgifs_output_dir)
+    stdev_gif_three = _create_slices_gif(stdev_nii, 3, picgifs_output_dir)
 
+    #Create gifs going through the snr image
+    snr_gif_one = _create_slices_gif(snr_nii, 1, picgifs_output_dir)
+    snr_gif_two = _create_slices_gif(snr_nii, 2, picgifs_output_dir)
+    snr_gif_three = _create_slices_gif(snr_nii, 3, picgifs_output_dir)
+
+    #Delete the mean image, the stdev image, and the SNR image
+    try_delete(mean_nii)
+    try_delete(stdev_nii)
+    try_delete(snr_nii)
 
 
 if __name__ is "__main__":
