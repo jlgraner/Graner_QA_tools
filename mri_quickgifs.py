@@ -10,10 +10,9 @@ import os, sys
 import subprocess
 import nibabel as nib
 import numpy as np
+import imageio
 
 args = sys.argv
-
-this_env = os.environ
 
 def _check_inputs(args):
     if len(args) < 2:
@@ -31,7 +30,7 @@ def _format_input_file(raw_input_file):
         input_func_data = raw_input_file
     return input_func_data
 
-def _get_niiprefext(input_file):
+def _get_niiprefext(input_nii):
     #Returns the prefix and extension of an input file after
     #determining if the ends in ".nii.gz" or ".nii".
     if input_nii[-7:] == '.nii.gz':
@@ -47,6 +46,28 @@ def _get_niiprefext(input_file):
     return input_prefix, extension
 
 
+def _grayscale_conv(input_array):
+    #Convert an input array to 0-255 to support
+    #grayscale png output
+    gs_array = 255*(input_array/input_array.max())
+    gs_array = np.rint(gs_array)
+    return gs_array
+
+
+def _format_picture(input_array):
+    #The input will be an array as read by nib
+    #The output will be a PIL Image object
+    pil_image = pImage.fromarray(input_array)
+    #Rotate the image (if needed) so the longest side is the width
+    if pil_image.size[0] == max(pil_image.size):
+        output_pimage = pil_image
+    else:
+        output_pimage = pil_image.rotate(90,expand=1)
+    #Convert the image mode to "LA" for writing
+    output_pimage = output_pimage.convert(mode="LA")
+    return output_pimage
+
+
 def temp_stdev(input_nii, output_dir):
     
     input_prefix, extension = _get_niiprefext(input_nii)
@@ -57,6 +78,8 @@ def temp_stdev(input_nii, output_dir):
 
     #Put together output image
     output_file = os.path.join(output_dir, input_prefix+suffix+extension)
+
+    ##TODO: DELETE IMAGE IF IT ALREADY EXISTS
 
     #Put together call to create standard deviation image
     call_parts = ['3dTstat', '-nzstdev', '-prefix', output_file, input_nii]
@@ -77,6 +100,8 @@ def temp_mean(input_nii, output_dir):
 
     #Put together output image
     output_file = os.path.join(output_dir, input_prefix+suffix+extension)
+
+    ##TODO: DELETE IMAGE IF IT ALREADY EXISTS
 
     #Put together call to create mean image
     call_parts = ['3dTstat', '-nzmean', '-prefix', output_file, input_nii]
@@ -100,8 +125,10 @@ def temp_snr(input_mean, input_stdev, output_dir):
     #Put together output image file
     output_file = os.path.join(output_dir, output_prefix+suffix+extension)
 
+    ##TODO: DELETE IMAGE IF IT ALREADY EXISTS
+
     #Put together call to create snr image
-    call_parts = ['3dCalc', '-a', input_mean,
+    call_parts = ['3dcalc', '-a', input_mean,
                             '-b', input_stdev,
                             '-float',
                             '-prefix', output_file,
@@ -144,8 +171,8 @@ def main(args):
         #Get passed output directory
         dir_to_test = args[2]
     else:
-        #Set the output directory to the path of the input file plus "/quickgifs"
-        dir_to_test = os.path.join(os.path.split(input_func_data)[0], quickgifs_dir)
+        #Set the output directory to the path of the input file
+        dir_to_test = os.path.join(os.path.split(input_func_data)[0])
 
     #Format output directory
     output_dir = _format_base_output_dir(dir_to_test, quickgifs_dir)
@@ -192,13 +219,48 @@ def main(args):
     #Read in nifti as a nibabel image
     img = nib.load(input_func_data)
 
-    #Get image data and affine transform
+    #Get image data
     img_data = img.get_data()
-    img_affine = img.get_affine()
     
-    #Create gif of center saggital slices
-    #Create gif of center axial slices
-    #Create gif of center coronal slices
+    #Get the center slice number of each dimension
+    img_dims = img_data.shape
+    center_x = round(img_dims[0] / 2.0)
+    center_y = round(img_dims[1] / 2.0)
+    center_z = round(img_dims[2] / 2.0)
+    time_points = img_dims[3]
+
+    #Keep only the center slice of each dimension
+    center_x_image = img_data[center_x, :, :, :]
+    center_y_image = img_data[:, center_y, :, :]
+    center_z_image = img_data[:, :, center_z, :]
+
+    #Rescale each group of center slices to 0-255
+    #This process also squeezes the arrays down to 3 dimensions
+    center_x_image = _grayscale_conv(center_x_image)
+    center_y_image = _grayscale_conv(center_y_image)
+    center_z_image = _grayscale_conv(center_z_image)
+
+    #For each of the three dimensions, for each timepoint in that dimension,
+    #extract the slice and create a formatted PIL Image version of it
+    dim_count = 0
+    for subset in [center_x_image, center_y_image, center_z_image]:
+        slice_files = []
+        #Create a temporary png file of the center slice at each timepoint
+        for slice_num in range(subset.shape[2]):
+            this_slice = subset[:,:,slice_num]
+            slice_to_write = _format_picture(this_slice)
+            slice_to_write.save(os.path.join(picgifs_output_dir, 'temp_slice_gif_{}_{}.png'.format(dim_count,slice_num)))
+            slice_files.append(os.path.join(picgifs_output_dir, 'temp_slice_gif_{}_{}.png'.format(dim_count,slice_num)))
+        #Create a gif of the center slice pictures
+        images = []
+        for filename in slice_files:
+            images.append(imageio.imread(filename))
+        output_gif = os.path.join(picgifs_output_dir, 'center_slice_gif_{}.gif'.format(dim_count))
+        print(output_gif)
+        imageio.mimsave(output_gif, images, duration=0.2)
+        dim_count = dim_count + 1
+
+
     #Create gif going through mean image axially
     #Create gif going through mean image saggitally
     #Create gif going through mean image coronally
@@ -206,4 +268,4 @@ def main(args):
 
 
 if __name__ is "__main__":
-    main(args, this_env)
+    main(args)
