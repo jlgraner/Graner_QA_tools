@@ -196,7 +196,7 @@ def arr_to_gif(input_array, slice_dim, output_dir, output_gif_prefix):
         images.append(imageio.imread(filename))
     output_gif = os.path.join(output_dir, '{prefix}_{dim}.gif'.format(prefix=output_gif_prefix,dim=slice_dim))
     print(output_gif)
-    imageio.mimsave(output_gif, images, duration=0.2)
+    imageio.mimsave(output_gif, images, duration=0.1)
     #Delete pngs
     for filename in slice_files:
         try_delete(filename)
@@ -225,6 +225,75 @@ def niithree_to_gif(input_nii, slice_dim, output_dir):
 def try_delete(file_to_go):
     if os.path.exists(file_to_go):
         os.remove(file_to_go)
+
+def _write_html(input_prefix, output_dir):
+    #Write out an html file to display the various gifs created.
+    #For now, just assume a static set of gifs.
+
+    if not os.path.exists(output_dir):
+        print('Output directory not found: {} -- _write_html()'.format(output_dir))
+        return None
+
+    line_list = [
+    '<HTML>', 
+    '<HEAD>',
+    '<TITLE>mri_quickgifs Summary</TITLE>',
+    '</HEAD>',
+    '<BODY>',
+    '<H1>ORIGINAL IMAGE</H1>',
+    '<H2>fMRI Center Slices Over Time</H2>',
+    '<br>',
+    '<IMAGE SRC=".\pictures_gifs\{}_center_x_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_center_y_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_center_z_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<br>',
+    '<H2>Mean Image</H2>',
+    '<br>',
+    '<IMAGE SRC=".\pictures_gifs\{}_mean_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_mean_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_mean_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<br>',
+    '<H2>Standard Deviation Image</H2>',
+    '<br>',
+    '<IMAGE SRC=".\pictures_gifs\{}_stdev_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_stdev_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_stdev_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<br>',
+    '<H2>Temporal SNR Image</H2>',
+    '<br>',
+    '<IMAGE SRC=".\pictures_gifs\{}_snr_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_snr_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_snr_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<br>',
+    '<H1>IMAGE WITH FIRST 4 TRS REMOVED</H1>',
+    '<H2>Mean Image</H2>',
+    '<br>',
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<br>',
+    '<H2>Standard Deviation Image</H2>',
+    '<br>',
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<br>',
+    '<H2>Temporal SNR Image</H2>',
+    '<br>',
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<br>',
+    '</BODY>',
+    '</HTML>'
+    ]
+
+    output_file = os.path.join(output_dir, 'mriquickgifs_{}.html'.format(input_prefix))
+    with open(output_file, 'w') as fo:
+        for line in line_list:
+            fo.write('{}\n'.format(line))
+
+    return output_file
 
 
 def main(args):
@@ -393,6 +462,11 @@ def main(args):
     try_delete(cut_stdev_nii)
     try_delete(cut_snr_nii)
 
+    #Write out the html
+    output_html = _write_html(input_prefix, output_dir)
+    if output_html is None:
+        print('Something went wrong creating html file! -- mri_quickgifs.main()')
+        raise RuntimeError
 
 if __name__ is "__main__":
     main(args)
