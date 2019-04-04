@@ -54,17 +54,26 @@ def _grayscale_conv(input_array):
     return gs_array
 
 
-def _format_picture(input_array):
+def _format_picture(input_array, bot_rows_to_add=None):
     #The input will be an array as read by nib
     #The output will be a PIL Image object
-    pil_image = pImage.fromarray(input_array)
     #Rotate the image (if needed) so the longest side is the width
-    if pil_image.size[0] == max(pil_image.size):
-        output_pimage = pil_image
+    if input_array.shape[1] == max(input_array.shape):
+        array_to_use = input_array
     else:
-        output_pimage = pil_image.rotate(90,expand=1)
+        array_to_use = np.rot90(input_array)
+
+    if bot_rows_to_add is not None:
+        array_to_use = np.concatenate((array_to_use, bot_rows_to_add),axis=0)
+
+    pil_image = pImage.fromarray(array_to_use)
+    # #Rotate the image (if needed) so the longest side is the width
+    # if pil_image.size[0] == max(pil_image.size):
+    #     output_pimage = pil_image
+    # else:
+    #     output_pimage = pil_image.rotate(90,expand=1)
     #Convert the image mode to "LA" for writing
-    output_pimage = output_pimage.convert(mode="LA")
+    output_pimage = pil_image.convert(mode="LA")
     return output_pimage
 
 
@@ -170,7 +179,7 @@ def _format_base_output_dir(dir_to_test, quickgifs_dir):
     return os.path.join(dir_to_test, quickgifs_dir)
 
 
-def arr_to_gif(input_array, slice_dim, output_dir, output_gif_prefix):
+def arr_to_gif(input_array, slice_dim, output_dir, output_gif_prefix, prog_rows_flag=0):
     #Scale the image to 0-255
     input_array = _grayscale_conv(input_array)
 
@@ -182,11 +191,24 @@ def arr_to_gif(input_array, slice_dim, output_dir, output_gif_prefix):
     data_to_slice = input_array.transpose(transpose_array)
     num_slices = data_to_slice.shape[-1]
 
+    #If desired, create some rows to add to the bottom of the picture to
+    #display progress through the gif
+    if prog_rows_flag:
+        longest_side = max(data_to_slice.shape[0:1])
+        step_per_picture = float(longest_side)/float(num_slices)
+        progress_indices = np.ceil(np.arange(num_slices)*step_per_picture)
+
     #Create pictures of each slice
     slice_files = []
     for slice_num in range(num_slices):
         slice_data = data_to_slice[:,:,slice_num]
-        slice_to_write = _format_picture(slice_data)
+        if prog_rows_flag:
+            prog_rows = np.zeros((5, longest_side))
+            # print('progress_indces[slice_num]: {}'.format(int(progress_indices[slice_num])))
+            prog_rows[:, 0:int(progress_indices[slice_num])] = 255
+        else:
+            prog_rows = None
+        slice_to_write = _format_picture(slice_data, bot_rows_to_add=prog_rows)
         slice_outfile = os.path.join(output_dir, 'temp_slice_gif_{}.png'.format(slice_num))
         slice_to_write.save(slice_outfile)
         slice_files.append(slice_outfile)
@@ -199,11 +221,11 @@ def arr_to_gif(input_array, slice_dim, output_dir, output_gif_prefix):
     imageio.mimsave(output_gif, images, duration=0.1)
     #Delete pngs
     for filename in slice_files:
-        try_delete(filename)
+        _try_delete(filename)
     return output_gif
 
 
-def niithree_to_gif(input_nii, slice_dim, output_dir):
+def niithree_to_gif(input_nii, slice_dim, output_dir, prog_rows_flag=0):
     #NOTE: this function assumes the input image has 3 dimensions
 
     #Make sure the input image exists
@@ -217,12 +239,12 @@ def niithree_to_gif(input_nii, slice_dim, output_dir):
 
     output_gif_prefix = os.path.split(input_nii)[-1].split('.nii')[0]
 
-    output_gif = arr_to_gif(img_data, slice_dim, output_dir, output_gif_prefix)
+    output_gif = arr_to_gif(img_data, slice_dim, output_dir, output_gif_prefix, prog_rows_flag=prog_rows_flag)
     
     return output_gif
 
 
-def try_delete(file_to_go):
+def _try_delete(file_to_go):
     if os.path.exists(file_to_go):
         os.remove(file_to_go)
 
@@ -419,9 +441,9 @@ def main(args):
     input_prefix = os.path.split(input_func_data)[-1].split('.nii')[0]
 
     #Create gifs through time
-    center_x_gif = arr_to_gif(center_x_image, 3, picgifs_output_dir, '{}_center_x'.format(input_prefix))
-    center_y_gif = arr_to_gif(center_y_image, 3, picgifs_output_dir, '{}_center_y'.format(input_prefix))
-    center_z_gif = arr_to_gif(center_z_image, 3, picgifs_output_dir, '{}_center_z'.format(input_prefix))
+    center_x_gif = arr_to_gif(center_x_image, 3, picgifs_output_dir, '{}_center_x'.format(input_prefix), prog_rows_flag=1)
+    center_y_gif = arr_to_gif(center_y_image, 3, picgifs_output_dir, '{}_center_y'.format(input_prefix), prog_rows_flag=1)
+    center_z_gif = arr_to_gif(center_z_image, 3, picgifs_output_dir, '{}_center_z'.format(input_prefix), prog_rows_flag=1)
 
     ##Create gifs going through the mean image in each dimension
     mean_gif_one = niithree_to_gif(mean_nii, 1, picgifs_output_dir)
@@ -454,13 +476,13 @@ def main(args):
     cut_snr_gif_three = niithree_to_gif(cut_snr_nii, 3, picgifs_output_dir)
 
     #Delete the mean image, the stdev image, and the SNR image
-    try_delete(mean_nii)
-    try_delete(stdev_nii)
-    try_delete(snr_nii)
-    try_delete(cut_nii)
-    try_delete(cut_mean_nii)
-    try_delete(cut_stdev_nii)
-    try_delete(cut_snr_nii)
+    _try_delete(mean_nii)
+    _try_delete(stdev_nii)
+    _try_delete(snr_nii)
+    _try_delete(cut_nii)
+    _try_delete(cut_mean_nii)
+    _try_delete(cut_stdev_nii)
+    _try_delete(cut_snr_nii)
 
     #Write out the html
     output_html = _write_html(input_prefix, output_dir)
