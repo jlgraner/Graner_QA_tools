@@ -430,41 +430,49 @@ def main(args):
     input_prefix = os.path.split(input_func_data)[-1].split('.nii')[0]
 
     #Create gifs through time
+    print('Creating center slice gifs...')
     center_x_gif = arr_to_gif(center_x_image, 3, picgifs_output_dir, '{}_center_x'.format(input_prefix), prog_rows_flag=1)
     center_y_gif = arr_to_gif(center_y_image, 3, picgifs_output_dir, '{}_center_y'.format(input_prefix), prog_rows_flag=1)
     center_z_gif = arr_to_gif(center_z_image, 3, picgifs_output_dir, '{}_center_z'.format(input_prefix), prog_rows_flag=1)
 
     ##Create gifs going through the mean image in each dimension
+    print('Creating temporal mean gifs...')
     mean_gif_one = niithree_to_gif(mean_nii, 1, picgifs_output_dir)
     mean_gif_two = niithree_to_gif(mean_nii, 2, picgifs_output_dir)
     mean_gif_three = niithree_to_gif(mean_nii, 3, picgifs_output_dir)
 
     #Create gifs going through the stdev image
+    print('Creating temporal standard deviation gifs...')
     stdev_gif_one = niithree_to_gif(stdev_nii, 1, picgifs_output_dir)
     stdev_gif_two = niithree_to_gif(stdev_nii, 2, picgifs_output_dir)
     stdev_gif_three = niithree_to_gif(stdev_nii, 3, picgifs_output_dir)
 
     #Create gifs going through the snr image
+    print('Creating temporal SNR gifs...')
     snr_gif_one = niithree_to_gif(snr_nii, 1, picgifs_output_dir)
     snr_gif_two = niithree_to_gif(snr_nii, 2, picgifs_output_dir)
     snr_gif_three = niithree_to_gif(snr_nii, 3, picgifs_output_dir)
 
     #Create gifs going through the short mean image
+    print('Creating temporal mean gifs for shortened image...')
     cut_mean_gif_one = niithree_to_gif(cut_mean_nii, 1, picgifs_output_dir)
     cut_mean_gif_two = niithree_to_gif(cut_mean_nii, 2, picgifs_output_dir)
     cut_mean_gif_three = niithree_to_gif(cut_mean_nii, 3, picgifs_output_dir)
 
     #Create gifs going through the short stdev image
+    print('Creating temporal standard deviation gifs for shortened image...')
     cut_stdev_gif_one = niithree_to_gif(cut_stdev_nii, 1, picgifs_output_dir)
     cut_stdev_gif_two = niithree_to_gif(cut_stdev_nii, 2, picgifs_output_dir)
     cut_stdev_gif_three = niithree_to_gif(cut_stdev_nii, 3, picgifs_output_dir)
 
     #Create gifs going through the short snr image
+    print('Creating temporal SNR gifs for shortened image...')
     cut_snr_gif_one = niithree_to_gif(cut_snr_nii, 1, picgifs_output_dir)
     cut_snr_gif_two = niithree_to_gif(cut_snr_nii, 2, picgifs_output_dir)
     cut_snr_gif_three = niithree_to_gif(cut_snr_nii, 3, picgifs_output_dir)
 
     #Delete the mean image, the stdev image, and the SNR image
+    print('Deleting temporary images...')
     _try_delete(mean_nii)
     _try_delete(stdev_nii)
     _try_delete(snr_nii)
@@ -478,10 +486,14 @@ def main(args):
         os.rmdir(image_output_dir)
 
     #Write out the html
+    print('Writing output html file...')
     output_html = _write_html(input_prefix, output_dir)
     if output_html is None:
         print('Something went wrong creating html file! -- mri_quickgifs.main()')
         raise RuntimeError
+    print('-------------------------------------------------')
+    print('Output html file: {}'.format(output_html))
+    print('-------------------------------------------------')
 
 if __name__ is "__main__":
     main(args)
