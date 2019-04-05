@@ -67,11 +67,6 @@ def _format_picture(input_array, bot_rows_to_add=None):
         array_to_use = np.concatenate((array_to_use, bot_rows_to_add),axis=0)
 
     pil_image = pImage.fromarray(array_to_use)
-    # #Rotate the image (if needed) so the longest side is the width
-    # if pil_image.size[0] == max(pil_image.size):
-    #     output_pimage = pil_image
-    # else:
-    #     output_pimage = pil_image.rotate(90,expand=1)
     #Convert the image mode to "LA" for writing
     output_pimage = pil_image.convert(mode="LA")
     return output_pimage
@@ -88,7 +83,8 @@ def temp_stdev(input_nii, output_dir):
     #Put together output image
     output_file = os.path.join(output_dir, input_prefix+suffix+extension)
 
-    ##TODO: DELETE IMAGE IF IT ALREADY EXISTS
+    #Delete the image if it already exists
+    _try_delete(output_file)
 
     #Put together call to create standard deviation image
     call_parts = ['3dTstat', '-nzstdev', '-prefix', output_file, input_nii]
@@ -110,7 +106,8 @@ def temp_mean(input_nii, output_dir):
     #Put together output image
     output_file = os.path.join(output_dir, input_prefix+suffix+extension)
 
-    ##TODO: DELETE IMAGE IF IT ALREADY EXISTS
+    #Delete the image if it already exists
+    _try_delete(output_file)
 
     #Put together call to create mean image
     call_parts = ['3dTstat', '-nzmean', '-prefix', output_file, input_nii]
@@ -132,7 +129,8 @@ def temp_cut(input_nii, output_dir):
     #Put together output image
     output_file = os.path.join(output_dir, input_prefix+suffix+extension)
 
-    ##TODO: DELETE IMAGE IF IT ALREADY EXISTS
+    #Delete the image if it already exists
+    _try_delete(output_file)
 
     #Put together call to create mean image
     call_parts = ['3dTcat', '-prefix', output_file, input_nii+'[4..$]']
@@ -156,7 +154,8 @@ def temp_snr(input_mean, input_stdev, output_dir):
     #Put together output image file
     output_file = os.path.join(output_dir, output_prefix+suffix+extension)
 
-    ##TODO: DELETE IMAGE IF IT ALREADY EXISTS
+    #Delete the image if it already exists
+    _try_delete(output_file)
 
     #Put together call to create snr image
     call_parts = ['3dcalc', '-a', input_mean,
@@ -194,7 +193,7 @@ def arr_to_gif(input_array, slice_dim, output_dir, output_gif_prefix, prog_rows_
     #If desired, create some rows to add to the bottom of the picture to
     #display progress through the gif
     if prog_rows_flag:
-        longest_side = max(data_to_slice.shape[0:1])
+        longest_side = max(data_to_slice.shape[0:2])
         step_per_picture = float(longest_side)/float(num_slices)
         progress_indices = np.ceil(np.arange(num_slices)*step_per_picture)
 
@@ -204,7 +203,6 @@ def arr_to_gif(input_array, slice_dim, output_dir, output_gif_prefix, prog_rows_
         slice_data = data_to_slice[:,:,slice_num]
         if prog_rows_flag:
             prog_rows = np.zeros((5, longest_side))
-            # print('progress_indces[slice_num]: {}'.format(int(progress_indices[slice_num])))
             prog_rows[:, 0:int(progress_indices[slice_num])] = 255
         else:
             prog_rows = None
