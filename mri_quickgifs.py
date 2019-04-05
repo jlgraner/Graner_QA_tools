@@ -88,10 +88,8 @@ def temp_stdev(input_nii, output_dir):
 
     #Put together call to create standard deviation image
     call_parts = ['3dTstat', '-nzstdev', '-prefix', output_file, input_nii]
-    error_flag = subprocess.call(call_parts)
-    if error_flag:
-        print('Standard Deviation creation failed: {}'.string.join(call_parts))
-        return None
+    process = subprocess.Popen(call_parts, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = process.communicate()
     return output_file
 
 
@@ -111,10 +109,8 @@ def temp_mean(input_nii, output_dir):
 
     #Put together call to create mean image
     call_parts = ['3dTstat', '-nzmean', '-prefix', output_file, input_nii]
-    error_flag = subprocess.call(call_parts)
-    if error_flag:
-        print('Mean creation failed: {}'.string.join(call_parts))
-        return None
+    process = subprocess.Popen(call_parts, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = process.communicate()
     return output_file
 
 
@@ -134,10 +130,8 @@ def temp_cut(input_nii, output_dir):
 
     #Put together call to create mean image
     call_parts = ['3dTcat', '-prefix', output_file, input_nii+'[4..$]']
-    error_flag = subprocess.call(call_parts)
-    if error_flag:
-        print('TR cut failed: {}'.string.join(call_parts))
-        return None
+    process = subprocess.Popen(call_parts, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = process.communicate()
     return output_file
 
 
@@ -163,10 +157,8 @@ def temp_snr(input_mean, input_stdev, output_dir):
                             '-float',
                             '-prefix', output_file,
                             '-exp', 'a/b']
-    error_flag = subprocess.call(call_parts)
-    if error_flag:
-        print('SNR creation failed: {}'.string.join(call_parts))
-        return None
+    process = subprocess.Popen(call_parts, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = process.communicate()
     return output_file
 
 
@@ -215,7 +207,6 @@ def arr_to_gif(input_array, slice_dim, output_dir, output_gif_prefix, prog_rows_
     for filename in slice_files:
         images.append(imageio.imread(filename))
     output_gif = os.path.join(output_dir, '{prefix}_{dim}.gif'.format(prefix=output_gif_prefix,dim=slice_dim))
-    print(output_gif)
     imageio.mimsave(output_gif, images, duration=0.1)
     #Delete pngs
     for filename in slice_files:
@@ -481,6 +472,10 @@ def main(args):
     _try_delete(cut_mean_nii)
     _try_delete(cut_stdev_nii)
     _try_delete(cut_snr_nii)
+
+    #Delete the image output directory, which should now be empty
+    if os.path.exists(image_output_dir):
+        os.rmdir(image_output_dir)
 
     #Write out the html
     output_html = _write_html(input_prefix, output_dir)
