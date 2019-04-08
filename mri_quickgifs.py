@@ -3,22 +3,27 @@
 #Goal: generate some quick gifs of an input image and a few QC derivatives
 #      to visually check basic image quality
 
-
-
 from PIL import Image as pImage
 import os, sys
 import subprocess
+import argparse
 import nibabel as nib
 import numpy as np
 import imageio
 
-args = sys.argv
+# args = sys.argv
+parser=argparse.ArgumentParser(
+    description='''Generate quick visualization of input image and some basic statistical volumes. ''',
+    usage='python3 -m mri_quickgifs raw_input_file [output_dir]')
+parser.add_argument('raw_input_file', help='path and filename of a 4D .nii or .nii.gz')
+parser.add_argument('output_dir', nargs='?', default=None, help='where things will get written. If not provided, uses current working dir')
+args = parser.parse_args()
 
-def _check_inputs(args):
-    if len(args) < 2:
-        print('Requires one input argument: file name of input .nii or .nii.gz image')
-        return 0
-    return 1
+# def _check_inputs(args):
+#     if len(args) < 2:
+#         print('Requires one input argument: file name of input .nii or .nii.gz image')
+#         return 0
+#     return 1
 
 
 def _format_input_file(raw_input_file):
@@ -29,6 +34,15 @@ def _format_input_file(raw_input_file):
     else:
         input_func_data = raw_input_file
     return input_func_data
+
+
+def _format_base_output_dir(dir_to_test, quickgifs_dir):
+    #The passed directory needs to exist already
+    if not os.path.exists(dir_to_test):
+        print('Passed output directory not found: {}'.format(dir_to_test))
+        raise RuntimeError
+    return os.path.join(dir_to_test, quickgifs_dir)
+
 
 def _get_niiprefext(input_nii):
     #Returns the prefix and extension of an input file after
@@ -70,6 +84,81 @@ def _format_picture(input_array, bot_rows_to_add=None):
     #Convert the image mode to "LA" for writing
     output_pimage = pil_image.convert(mode="LA")
     return output_pimage
+
+
+def _try_delete(file_to_go):
+    if os.path.exists(file_to_go):
+        os.remove(file_to_go)
+
+
+def _write_html(input_prefix, output_dir):
+    #Write out an html file to display the various gifs created.
+    #For now, just assume a static set of gifs.
+
+    if not os.path.exists(output_dir):
+        print('Output directory not found: {} -- _write_html()'.format(output_dir))
+        return None
+
+    line_list = [
+    '<HTML>', 
+    '<HEAD>',
+    '<TITLE>mri_quickgifs Summary</TITLE>',
+    '</HEAD>',
+    '<BODY>',
+    '<H1>ORIGINAL IMAGE</H1>',
+    '<H2>fMRI Center Slices Over Time</H2>',
+    '<br>',
+    '<IMAGE SRC=".\pictures_gifs\{}_center_x_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_center_y_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_center_z_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<br>',
+    '<H2>Mean Image</H2>',
+    '<br>',
+    '<IMAGE SRC=".\pictures_gifs\{}_mean_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_mean_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_mean_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<br>',
+    '<H2>Standard Deviation Image</H2>',
+    '<br>',
+    '<IMAGE SRC=".\pictures_gifs\{}_stdev_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_stdev_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_stdev_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<br>',
+    '<H2>Temporal SNR Image</H2>',
+    '<br>',
+    '<IMAGE SRC=".\pictures_gifs\{}_snr_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_snr_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_snr_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<br>',
+    '<H1>IMAGE WITH FIRST 4 TRS REMOVED</H1>',
+    '<H2>Mean Image</H2>',
+    '<br>',
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<br>',
+    '<H2>Standard Deviation Image</H2>',
+    '<br>',
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<br>',
+    '<H2>Temporal SNR Image</H2>',
+    '<br>',
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<br>',
+    '</BODY>',
+    '</HTML>'
+    ]
+
+    output_file = os.path.join(output_dir, 'mriquickgifs_{}.html'.format(input_prefix))
+    with open(output_file, 'w') as fo:
+        for line in line_list:
+            fo.write('{}\n'.format(line))
+
+    return output_file
 
 
 def temp_stdev(input_nii, output_dir):
@@ -162,14 +251,6 @@ def temp_snr(input_mean, input_stdev, output_dir):
     return output_file
 
 
-def _format_base_output_dir(dir_to_test, quickgifs_dir):
-    #The passed directory needs to exist already
-    if not os.path.exists(dir_to_test):
-        print('Passed output directory not found: {}'.format(dir_to_test))
-        raise RuntimeError
-    return os.path.join(dir_to_test, quickgifs_dir)
-
-
 def arr_to_gif(input_array, slice_dim, output_dir, output_gif_prefix, prog_rows_flag=0):
     #Scale the image to 0-255
     input_array = _grayscale_conv(input_array)
@@ -233,102 +314,31 @@ def niithree_to_gif(input_nii, slice_dim, output_dir, prog_rows_flag=0):
     return output_gif
 
 
-def _try_delete(file_to_go):
-    if os.path.exists(file_to_go):
-        os.remove(file_to_go)
-
-def _write_html(input_prefix, output_dir):
-    #Write out an html file to display the various gifs created.
-    #For now, just assume a static set of gifs.
-
-    if not os.path.exists(output_dir):
-        print('Output directory not found: {} -- _write_html()'.format(output_dir))
-        return None
-
-    line_list = [
-    '<HTML>', 
-    '<HEAD>',
-    '<TITLE>mri_quickgifs Summary</TITLE>',
-    '</HEAD>',
-    '<BODY>',
-    '<H1>ORIGINAL IMAGE</H1>',
-    '<H2>fMRI Center Slices Over Time</H2>',
-    '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_center_x_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_center_y_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_center_z_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<br>',
-    '<H2>Mean Image</H2>',
-    '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_mean_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_mean_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_mean_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<br>',
-    '<H2>Standard Deviation Image</H2>',
-    '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_stdev_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_stdev_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_stdev_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<br>',
-    '<H2>Temporal SNR Image</H2>',
-    '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_snr_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_snr_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_snr_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<br>',
-    '<H1>IMAGE WITH FIRST 4 TRS REMOVED</H1>',
-    '<H2>Mean Image</H2>',
-    '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<br>',
-    '<H2>Standard Deviation Image</H2>',
-    '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<br>',
-    '<H2>Temporal SNR Image</H2>',
-    '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<br>',
-    '</BODY>',
-    '</HTML>'
-    ]
-
-    output_file = os.path.join(output_dir, 'mriquickgifs_{}.html'.format(input_prefix))
-    with open(output_file, 'w') as fo:
-        for line in line_list:
-            fo.write('{}\n'.format(line))
-
-    return output_file
-
-
 def main(args):
 
     #Variable for this script's output directory
     quickgifs_dir = 'quickgifs'
 
-    #Check input arguments
-    args_okay = _check_inputs(args)
-    if not args_okay:
-        ##TODO: Add error message output
-        raise RuntimeError
+    # #Check input arguments
+    # args_okay = _check_inputs(args)
+    # if not args_okay:
+    #     ##TODO: Add error message output
+    #     raise RuntimeError
 
     #Extract the passed argument as the input file
-    raw_input_file = args[1]
+    # raw_input_file = args[1]
+    raw_input_file=args.raw_input_file
 
     #If the input file name wasn't passed with a path, append the
     #current working directory.
     input_func_data = _format_input_file(raw_input_file)
 
     #See if an output directory was passed.
-    if len(args) == 3:
+    # if len(args) == 3:
+    if args.output_dir is not None:
         #Get passed output directory
-        dir_to_test = args[2]
+        # dir_to_test = args[2]
+        dir_to_test = args.output_dir
     else:
         #Set the output directory to the path of the input file
         dir_to_test = os.path.join(os.path.split(input_func_data)[0])
