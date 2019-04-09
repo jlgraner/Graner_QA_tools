@@ -377,7 +377,7 @@ def main(args):
         raise RuntimeError
 
     #Create version of input image with first 4 timepoints removed
-    print('Cutting first 4 timepoints...')
+    print('Creating short version of input...')
     cut_nii = temp_cut(input_func_data, image_output_dir)
     if cut_nii is None:
         print('Error creating shorter input image!')
