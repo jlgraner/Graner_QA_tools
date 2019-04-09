@@ -316,28 +316,20 @@ def niithree_to_gif(input_nii, slice_dim, output_dir, prog_rows_flag=0):
 
 def main(args):
 
-    #Variable for this script's output directory
-    quickgifs_dir = 'quickgifs'
-
-    # #Check input arguments
-    # args_okay = _check_inputs(args)
-    # if not args_okay:
-    #     ##TODO: Add error message output
-    #     raise RuntimeError
-
     #Extract the passed argument as the input file
-    # raw_input_file = args[1]
     raw_input_file=args.raw_input_file
 
     #If the input file name wasn't passed with a path, append the
     #current working directory.
     input_func_data = _format_input_file(raw_input_file)
 
+    #Variable for this script's output directory
+    input_prefix, input_extension = _get_niiprefext(input_func_data)
+    quickgifs_dir = 'quickgifs_{}'.format(input_prefix)
+
     #See if an output directory was passed.
-    # if len(args) == 3:
     if args.output_dir is not None:
         #Get passed output directory
-        # dir_to_test = args[2]
         dir_to_test = args.output_dir
     else:
         #Set the output directory to the path of the input file
