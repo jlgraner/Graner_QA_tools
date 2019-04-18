@@ -1,7 +1,46 @@
 
 
-#Goal: generate some quick gifs of an input image and a few QC derivatives
-#      to visually check basic image quality
+##############################################################
+#Description: generate some quick gifs of an input image and a few QC derivatives
+#             to visually check basic image quality
+#
+#
+#Usage: python3 -m mri_quickgifs raw_input [output_dir]
+#
+#Inputs:
+#   raw_input: path and filename of a 4D .nii or .nii.gz image file
+#   [output_dir]: path where things will get written. If not provided, defaults to current working directory.
+#
+#Outputs:
+#   .../output_dir/quickgifs_[input_filename_prefix]/mriquickgifs_[input_filename_prefix].html:
+#           HTML file displaying output gifs
+#   .../output_dir/quickgifs_[input_filename_prefix]/pictures_gifs/
+#           Output directory containing gifs
+#   Gifs Created:
+#           [input_filename_prefix]_center_x_3.gif: center slice of the input image along the x axis at each time point
+#           [input_filename_prefix]_center_y_3.gif: center slice of the input image along the y axis at each time point
+#           [input_filename_prefix]_center_z_3.gif: center slice of the input image along the z axis at each time point
+#           [input_filename_prefix]_mean_1.gif: slices along the x axis of the temporal mean of the input image
+#           [input_filename_prefix]_mean_2.gif: slices along the y axis of the temporal mean of the input image
+#           [input_filename_prefix]_mean_3.gif: slices along the z axis of the temporal mean of the input image
+#           [input_filename_prefix]_stdev_1.gif: slices along the x axis of the temporal standard deviation of the input image
+#           [input_filename_prefix]_stdev_2.gif: slices along the y axis of the temporal standard deviation of the input image
+#           [input_filename_prefix]_stdev_3.gif: slices along the z axis of the temporal standard deviation of the input image
+#           [input_filename_prefix]_snr_1.gif: slices along the x axis of the temporal SNR (mean/stdev) of the input image
+#           [input_filename_prefix]_snr_2.gif: slices along the y axis of the temporal SNR (mean/stdev) of the input image
+#           [input_filename_prefix]_snr_3.gif: slices along the z axis of the temporal SNR (mean/stdev) of the input image
+#           [input_filename_prefix]_cut_mean_1.gif: slices along the x axis of the temporal mean of the input image after removing 4 TRs
+#           [input_filename_prefix]_cut_mean_2.gif: slices along the y axis of the temporal mean of the input image after removing 4 TRs
+#           [input_filename_prefix]_cut_mean_3.gif: slices along the z axis of the temporal mean of the input image after removing 4 TRs
+#           [input_filename_prefix]_cut_stdev_1.gif: slices along the x axis of the temporal standard deviation of the input image after removing 4 TRs
+#           [input_filename_prefix]_cut_stdev_2.gif: slices along the y axis of the temporal standard deviation of the input image after removing 4 TRs
+#           [input_filename_prefix]_cut_stdev_3.gif: slices along the z axis of the temporal standard deviation of the input image after removing 4 TRs
+#           [input_filename_prefix]_cut_snr_1.gif: slices along the x axis of the temporal SNR (mean/stdev) of the input image after removing 4 TRs
+#           [input_filename_prefix]_cut_snr_2.gif: slices along the y axis of the temporal SNR (mean/stdev) of the input image after removing 4 TRs
+#           [input_filename_prefix]_cut_snr_3.gif: slices along the z axis of the temporal SNR (mean/stdev) of the input image after removing 4 TRs
+#
+#Development: (04/2019) Written by John Graner, Ph.D., LaBar Laboratory, Center for Cognitive Neuroscience, Duke University, Durham, NC, USA
+##################################################################
 
 from PIL import Image as pImage
 import os, sys
@@ -11,19 +50,13 @@ import nibabel as nib
 import numpy as np
 import imageio
 
-# args = sys.argv
+#Set up argument parser and help dialogue
 parser=argparse.ArgumentParser(
     description='''Generate quick visualization of input image and some basic statistical volumes. ''',
     usage='python3 -m mri_quickgifs raw_input_file [output_dir]')
 parser.add_argument('raw_input_file', help='path and filename of a 4D .nii or .nii.gz')
 parser.add_argument('output_dir', nargs='?', default=None, help='where things will get written. If not provided, uses current working dir')
 args = parser.parse_args()
-
-# def _check_inputs(args):
-#     if len(args) < 2:
-#         print('Requires one input argument: file name of input .nii or .nii.gz image')
-#         return 0
-#     return 1
 
 
 def _format_input_file(raw_input_file):
