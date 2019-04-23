@@ -8,10 +8,15 @@ This script reads in a 4D .nii or .nii.gz file, creates gifs that visualize:
 2. All slices across each axis for the temporal mean image, the temporal standard deviation image, and the temporal SNR image.
 3. The same as number 2 but calculated after the first 4 time points of the image have been removed (to possibly account for non-steady state TRs).
 
-### Installation/Setup
-1. Download mri_quickgifs.py and save it somewhere in your python path or a place from which you can run python scripts. (Setup file creation is on the TODO list.)
-2. Download mri_quickgifs_requirements.txt and save it in a place accessible to pip.
-3. Run ```pip install -r mri_quickgifs_requirements.txt```
+### Installation/Setup (quick, "manual" option)
+1. Clone/download the repository and save it somewhere in your python path or a place from which you can run python scripts. (Setup file creation is on the TODO list.)
+2. Run ```pip install -r mri_quickgifs_requirements.txt```
+
+### Installation via Docker
+### (NOTE: the image size created will be ~1.5Gb! This is not the most space-efficient way to install this particular tool.)
+1. Clone/download the repository.
+2. CD into ```.../Graner_QA_tools```
+3. Run ```docker build --rm -t jlgraner/mri_quickgifs .```
 
 ### Running the Script
 1. Navigate to the directory containing mri_quickgifs.py (if it's not in your python path).
