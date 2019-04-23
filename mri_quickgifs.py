@@ -530,5 +530,5 @@ def main(args):
     print('Output html file: {}'.format(output_html))
     print('-------------------------------------------------')
 
-if __name__ is "__main__":
+if __name__ == "__main__":
     main(args)
