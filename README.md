@@ -13,7 +13,7 @@ This script reads in a 4D .nii or .nii.gz file, creates gifs that visualize:
 2. Run ```pip install -r mri_quickgifs_requirements.txt```
 
 ### Installation via Docker
-### (NOTE: the image size created will be ~1.5Gb! This is not the most space-efficient way to install this particular tool.)
+#### (NOTE: the image size created will be ~1.5Gb! This is not the most space-efficient way to install this particular tool.)
 1. Clone/download the repository.
 2. CD into ```.../Graner_QA_tools```
 3. Run ```docker build --rm -t jlgraner/mri_quickgifs .```
