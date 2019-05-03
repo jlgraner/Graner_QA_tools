@@ -10,18 +10,15 @@ This script reads in a 4D .nii or .nii.gz file, creates gifs that visualize:
 
 ### Installation/Setup (quick, "manual" option)
 1. Clone/download the repository and save it somewhere in your python path or a place from which you can run python scripts. (Setup file creation is on the TODO list.)
-2. Run ```pip install -r mri_quickgifs_requirements.txt```
+2. Navigate to the repository directory and run ```pip install -r requirements.txt```
 
 ### Installation via Docker
-#### (NOTE: the image size created will be ~1.5Gb! This is not the most space-efficient way to install this particular tool.)
-1. Clone/download the repository.
-2. CD into ```.../Graner_QA_tools```
-3. Run ```docker build --rm -t jlgraner/mri_quickgifs .```
+#### UNDER CONSTRUCTION
 
 ### Running the Script
 1. Navigate to the directory containing mri_quickgifs.py (if it's not in your python path).
-2. ```python -m mri_quickgifs INPUT_FILE [OUTPUT_DIR]```
-3. The script should take on the order of 45 seconds to run (depending on the size of the input data).
+2. ```python mri_quickgifs.py INPUT_FILE [OUTPUT_DIR]```
+3. The script should take on the order of 30 seconds to run (depending on the size of the input data).
 
 INPUT_FILE: full path and file name of your 4D .nii or .nii.gz file<br><br>
 OUTPUT_DIR (optional): full path to where you'd like mri_quickgifs to save the resulting gifs and html file. If no value is provided, the script defaults to the directory of the input image. NOTE: in either case the script will create a new "quickgifs" directory inside the output directory.
