@@ -20,15 +20,6 @@
 #           [input_filename_prefix]_center_x_3.gif: center slice of the input image along the x axis at each time point
 #           [input_filename_prefix]_center_y_3.gif: center slice of the input image along the y axis at each time point
 #           [input_filename_prefix]_center_z_3.gif: center slice of the input image along the z axis at each time point
-#           [input_filename_prefix]_mean_1.gif: slices along the x axis of the temporal mean of the input image
-#           [input_filename_prefix]_mean_2.gif: slices along the y axis of the temporal mean of the input image
-#           [input_filename_prefix]_mean_3.gif: slices along the z axis of the temporal mean of the input image
-#           [input_filename_prefix]_stdev_1.gif: slices along the x axis of the temporal standard deviation of the input image
-#           [input_filename_prefix]_stdev_2.gif: slices along the y axis of the temporal standard deviation of the input image
-#           [input_filename_prefix]_stdev_3.gif: slices along the z axis of the temporal standard deviation of the input image
-#           [input_filename_prefix]_snr_1.gif: slices along the x axis of the temporal SNR (mean/stdev) of the input image
-#           [input_filename_prefix]_snr_2.gif: slices along the y axis of the temporal SNR (mean/stdev) of the input image
-#           [input_filename_prefix]_snr_3.gif: slices along the z axis of the temporal SNR (mean/stdev) of the input image
 #           [input_filename_prefix]_cut_mean_1.gif: slices along the x axis of the temporal mean of the input image after removing 4 TRs
 #           [input_filename_prefix]_cut_mean_2.gif: slices along the y axis of the temporal mean of the input image after removing 4 TRs
 #           [input_filename_prefix]_cut_mean_3.gif: slices along the z axis of the temporal mean of the input image after removing 4 TRs
@@ -39,7 +30,7 @@
 #           [input_filename_prefix]_cut_snr_2.gif: slices along the y axis of the temporal SNR (mean/stdev) of the input image after removing 4 TRs
 #           [input_filename_prefix]_cut_snr_3.gif: slices along the z axis of the temporal SNR (mean/stdev) of the input image after removing 4 TRs
 #
-#Development: (04/2019) Written by John Graner, Ph.D., LaBar Laboratory, Center for Cognitive Neuroscience, Duke University, Durham, NC, USA
+#History: (04/2019) Written by John Graner, Ph.D., LaBar Laboratory, Center for Cognitive Neuroscience, Duke University, Durham, NC, USA
 ##################################################################
 
 from PIL import Image as pImage
@@ -48,6 +39,7 @@ import subprocess
 import argparse
 import nibabel as nib
 import numpy as np
+from scipy import signal
 import imageio
 
 #Set up argument parser and help dialogue
@@ -138,32 +130,13 @@ def _write_html(input_prefix, output_dir):
     '<TITLE>mri_quickgifs Summary</TITLE>',
     '</HEAD>',
     '<BODY>',
-    '<H1>ORIGINAL IMAGE</H1>',
+    '<H1>Note: The first 4 TRs were removed from the data before creating these movies!</H1>',
     '<H2>fMRI Center Slices Over Time</H2>',
     '<br>',
     '<IMAGE SRC=".\pictures_gifs\{}_center_x_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
     '<IMAGE SRC=".\pictures_gifs\{}_center_y_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
     '<IMAGE SRC=".\pictures_gifs\{}_center_z_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
     '<br>',
-    '<H2>Mean Image</H2>',
-    '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_mean_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_mean_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_mean_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<br>',
-    '<H2>Standard Deviation Image</H2>',
-    '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_stdev_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_stdev_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_stdev_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<br>',
-    '<H2>Temporal SNR Image</H2>',
-    '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_snr_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_snr_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_snr_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<br>',
-    '<H1>IMAGE WITH FIRST 4 TRS REMOVED</H1>',
     '<H2>Mean Image</H2>',
     '<br>',
     '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
@@ -191,96 +164,6 @@ def _write_html(input_prefix, output_dir):
         for line in line_list:
             fo.write('{}\n'.format(line))
 
-    return output_file
-
-
-def temp_stdev(input_nii, output_dir):
-    
-    input_prefix, extension = _get_niiprefext(input_nii)
-    if (input_prefix == None) or (extension == None):
-        print('Error getting input file prefix and/or extension!')
-        return None
-    suffix = '_stdev'
-
-    #Put together output image
-    output_file = os.path.join(output_dir, input_prefix+suffix+extension)
-
-    #Delete the image if it already exists
-    _try_delete(output_file)
-
-    #Put together call to create standard deviation image
-    call_parts = ['3dTstat', '-nzstdev', '-prefix', output_file, input_nii]
-    process = subprocess.Popen(call_parts, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = process.communicate()
-    return output_file
-
-
-def temp_mean(input_nii, output_dir):
-    
-    input_prefix, extension = _get_niiprefext(input_nii)
-    if (input_prefix == None) or (extension == None):
-        print('Error getting input file prefix and/or extension!')
-        return None
-    suffix = '_mean'
-
-    #Put together output image
-    output_file = os.path.join(output_dir, input_prefix+suffix+extension)
-
-    #Delete the image if it already exists
-    _try_delete(output_file)
-
-    #Put together call to create mean image
-    call_parts = ['3dTstat', '-nzmean', '-prefix', output_file, input_nii]
-    process = subprocess.Popen(call_parts, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = process.communicate()
-    return output_file
-
-
-def temp_cut(input_nii, output_dir):
-    
-    input_prefix, extension = _get_niiprefext(input_nii)
-    if (input_prefix == None) or (extension == None):
-        print('Error getting input file prefix and/or extension!')
-        return None
-    suffix = '_cut'
-
-    #Put together output image
-    output_file = os.path.join(output_dir, input_prefix+suffix+extension)
-
-    #Delete the image if it already exists
-    _try_delete(output_file)
-
-    #Put together call to create mean image
-    call_parts = ['3dTcat', '-prefix', output_file, input_nii+'[4..$]']
-    process = subprocess.Popen(call_parts, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = process.communicate()
-    return output_file
-
-
-def temp_snr(input_mean, input_stdev, output_dir):
-    #TODO: Check input image format
-    mean_prefix, mean_extension = _get_niiprefext(input_mean)
-    if '_mean' in mean_prefix:
-        output_prefix = mean_prefix.split('_mean')[0]
-    else:
-        output_prefix = mean_prefix
-    suffix = '_snr'
-    extension = mean_extension
-
-    #Put together output image file
-    output_file = os.path.join(output_dir, output_prefix+suffix+extension)
-
-    #Delete the image if it already exists
-    _try_delete(output_file)
-
-    #Put together call to create snr image
-    call_parts = ['3dcalc', '-a', input_mean,
-                            '-b', input_stdev,
-                            '-float',
-                            '-prefix', output_file,
-                            '-exp', 'a/b']
-    process = subprocess.Popen(call_parts, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = process.communicate()
     return output_file
 
 
@@ -328,25 +211,6 @@ def arr_to_gif(input_array, slice_dim, output_dir, output_gif_prefix, prog_rows_
     return output_gif
 
 
-def niithree_to_gif(input_nii, slice_dim, output_dir, prog_rows_flag=0):
-    #NOTE: this function assumes the input image has 3 dimensions
-
-    #Make sure the input image exists
-    if not os.path.exists(input_nii):
-        print('Input nii cannot be found: {} -- niithree_to_gif()'.format(input_nii))
-        return None
-
-    #Read in mean nifti image as a nibabel image and get data
-    img = nib.load(input_nii)
-    img_data = img.get_data()
-
-    output_gif_prefix = os.path.split(input_nii)[-1].split('.nii')[0]
-
-    output_gif = arr_to_gif(img_data, slice_dim, output_dir, output_gif_prefix, prog_rows_flag=prog_rows_flag)
-    
-    return output_gif
-
-
 def main(args):
 
     #Extract the passed argument as the input file
@@ -377,89 +241,50 @@ def main(args):
         os.mkdir(output_dir)
 
     #Set some output subdirectories and create them if they're not there
-    image_output_dir = os.path.join(output_dir, 'images')
     picgifs_output_dir = os.path.join(output_dir, 'pictures_gifs')
-    for element in [image_output_dir, picgifs_output_dir]:
-        if not os.path.exists(element):
-            print('Creating asset output directory: {}'.format(element))
-            os.mkdir(element)
+    if not os.path.exists(picgifs_output_dir):
+        print('Creating asset output directory: {}'.format(element))
+        os.mkdir(element)
 
-    #Create temporal standard deviation image
+    #Read the input file in as a nibabel image object
+    input_img = nib.load(input_func_data)
+    input_data = input_img.get_data()
+    ##TODO: Check the shape of the input data (should be 4D)
+    print('Removing first 4 timepoints...')
+    cut_data = input_data[:,:,:,4:]
+
+    #Detrend data and create temporal standard deviation images
+    print('Detrending input data...')
+    detrend_data = signal.detrend(input_data, axis=3, type='linear')
+    detrend_cut = signal.detrend(cut_data, axis=3, type='linear')
     print('Creating temporal standard deviation image...')
-    stdev_nii = temp_stdev(input_func_data, image_output_dir)
-    if stdev_nii is None:
-        print('Error creating standard deviation image!')
-        print('Input file: {}'.format(input_func_data))
-        raise RuntimeError
+    stdev_data = np.std(detrend_data, axis=3)
+    stdev_cut = np.std(cut_data, axis=3)
 
     #Create temporal mean image
     print('Creating temporal mean image...')
-    mean_nii = temp_mean(input_func_data, image_output_dir)
-    if mean_nii is None:
-        print('Error creating mean image!')
-        print('Input file: {}'.format(input_func_data))
-        raise RuntimeError
+    mean_data = np.mean(input_data, axis=3)
+    mean_cut = np.mean(cut_data, axis=3)
 
     #Create temporal SNR image
     print('Creating temporal SNR image...')
-    snr_nii = temp_snr(mean_nii, stdev_nii, image_output_dir)
-    if snr_nii is None:
-        print('Error creating temporal SNR image!')
-        print('Input Mean image: {}'.format(mean_nii))
-        print('Input Stdev image: {}'.format(stdev_nii))
-        raise RuntimeError
-
-    #Create version of input image with first 4 timepoints removed
-    print('Creating short version of input...')
-    cut_nii = temp_cut(input_func_data, image_output_dir)
-    if cut_nii is None:
-        print('Error creating shorter input image!')
-        print('Input file: {}'.format(input_func_data))
-        raise RuntimeError
-
-    #Create temporal standard deviation of cut image
-    print('Creating temporal standard deviation of short image...')
-    cut_stdev_nii = temp_stdev(cut_nii, image_output_dir)
-    if cut_stdev_nii is None:
-        print('Error creating standard deviation of cut image!')
-        print('Input file: {}'.format(cut_nii))
-        raise RuntimeError
-
-    #Create temporal mean of cut image
-    print('Creating temporal mean of short image...')
-    cut_mean_nii = temp_mean(cut_nii, image_output_dir)
-    if cut_mean_nii is None:
-        print('Error creating mean of short image!')
-        print('Input file: {}'.format(cut_nii))
-        raise RuntimeError
-
-    #Create temporal SNR of cut image
-    print('Creating temporal SNR of short image...')
-    cut_snr_nii = temp_snr(cut_mean_nii, cut_stdev_nii, image_output_dir)
-    if cut_snr_nii is None:
-        print('Error creating temporal SNR of short image!')
-        print('Input Mean image: {}'.format(cut_mean_nii))
-        print('Input Stdev image: {}'.format(cut_stdev_nii))
-        raise RuntimeError
+    tsnr_data = np.zeros(mean_data.shape)
+    tsnr_data = np.divide(mean_data, stdev_data, out=tsnr_data, where=stdev_data!=0)
+    tsnr_cut = np.zeros(mean_cut.shape)
+    tsnr_cut = np.divide(mean_cut, stdev_cut, out=tsnr_cut, where=stdev_cut!=0)
 
     ##Create gifs that go through the center slices at each timepoint##
-    #Read in nifti as a nibabel image
-    img = nib.load(input_func_data)
-
-    #Get image data
-    img_data = img.get_data()
-    
     #Get the center slice number of each dimension
-    img_dims = img_data.shape
+    img_dims = cut_data.shape
     center_x = round(img_dims[0] / 2.0)
     center_y = round(img_dims[1] / 2.0)
     center_z = round(img_dims[2] / 2.0)
     time_points = img_dims[3]
 
     #Keep only the center slice of each dimension
-    center_x_image = img_data[center_x, :, :, :]
-    center_y_image = img_data[:, center_y, :, :]
-    center_z_image = img_data[:, :, center_z, :]
+    center_x_image = cut_data[center_x, :, :, :]
+    center_y_image = cut_data[:, center_y, :, :]
+    center_z_image = cut_data[:, :, center_z, :]
 
     #Get the input image prefix
     input_prefix = os.path.split(input_func_data)[-1].split('.nii')[0]
@@ -472,53 +297,21 @@ def main(args):
 
     ##Create gifs going through the mean image in each dimension
     print('Creating temporal mean gifs...')
-    mean_gif_one = niithree_to_gif(mean_nii, 1, picgifs_output_dir)
-    mean_gif_two = niithree_to_gif(mean_nii, 2, picgifs_output_dir)
-    mean_gif_three = niithree_to_gif(mean_nii, 3, picgifs_output_dir)
+    mean_gif_one = arr_to_gif(mean_cut, 1, picgifs_output_dir, '{}_cut_mean_1'.format(input_prefix), prog_rows_flag=0)
+    mean_gif_two = arr_to_gif(mean_cut, 2, picgifs_output_dir, '{}_cut_mean_2'.format(input_prefix), prog_rows_flag=0)
+    mean_gif_three = arr_to_gif(mean_cut, 3, picgifs_output_dir, '{}_cut_mean_3'.format(input_prefix), prog_rows_flag=0)
 
     #Create gifs going through the stdev image
     print('Creating temporal standard deviation gifs...')
-    stdev_gif_one = niithree_to_gif(stdev_nii, 1, picgifs_output_dir)
-    stdev_gif_two = niithree_to_gif(stdev_nii, 2, picgifs_output_dir)
-    stdev_gif_three = niithree_to_gif(stdev_nii, 3, picgifs_output_dir)
+    stdev_gif_one = arr_to_gif(stdev_cut, 1, picgifs_output_dir, '{}_cut_stdev_1'.format(input_prefix), prog_rows_flag=0)
+    stdev_gif_two = arr_to_gif(stdev_cut, 2, picgifs_output_dir, '{}_cut_stdev_2'.format(input_prefix), prog_rows_flag=0)
+    stdev_gif_three = arr_to_gif(stdev_cut, 3, picgifs_output_dir, '{}_cut_stdev_3'.format(input_prefix), prog_rows_flag=0)
 
     #Create gifs going through the snr image
     print('Creating temporal SNR gifs...')
-    snr_gif_one = niithree_to_gif(snr_nii, 1, picgifs_output_dir)
-    snr_gif_two = niithree_to_gif(snr_nii, 2, picgifs_output_dir)
-    snr_gif_three = niithree_to_gif(snr_nii, 3, picgifs_output_dir)
-
-    #Create gifs going through the short mean image
-    print('Creating temporal mean gifs for shortened image...')
-    cut_mean_gif_one = niithree_to_gif(cut_mean_nii, 1, picgifs_output_dir)
-    cut_mean_gif_two = niithree_to_gif(cut_mean_nii, 2, picgifs_output_dir)
-    cut_mean_gif_three = niithree_to_gif(cut_mean_nii, 3, picgifs_output_dir)
-
-    #Create gifs going through the short stdev image
-    print('Creating temporal standard deviation gifs for shortened image...')
-    cut_stdev_gif_one = niithree_to_gif(cut_stdev_nii, 1, picgifs_output_dir)
-    cut_stdev_gif_two = niithree_to_gif(cut_stdev_nii, 2, picgifs_output_dir)
-    cut_stdev_gif_three = niithree_to_gif(cut_stdev_nii, 3, picgifs_output_dir)
-
-    #Create gifs going through the short snr image
-    print('Creating temporal SNR gifs for shortened image...')
-    cut_snr_gif_one = niithree_to_gif(cut_snr_nii, 1, picgifs_output_dir)
-    cut_snr_gif_two = niithree_to_gif(cut_snr_nii, 2, picgifs_output_dir)
-    cut_snr_gif_three = niithree_to_gif(cut_snr_nii, 3, picgifs_output_dir)
-
-    #Delete the mean image, the stdev image, and the SNR image
-    print('Deleting temporary images...')
-    _try_delete(mean_nii)
-    _try_delete(stdev_nii)
-    _try_delete(snr_nii)
-    _try_delete(cut_nii)
-    _try_delete(cut_mean_nii)
-    _try_delete(cut_stdev_nii)
-    _try_delete(cut_snr_nii)
-
-    #Delete the image output directory, which should now be empty
-    if os.path.exists(image_output_dir):
-        os.rmdir(image_output_dir)
+    snr_gif_one = arr_to_gif(tsnr_cut, 1, picgifs_output_dir, '{}_cut_snr_1'.format(input_prefix), prog_rows_flag=0)
+    snr_gif_two = arr_to_gif(tsnr_cut, 2, picgifs_output_dir, '{}_cut_snr_2'.format(input_prefix), prog_rows_flag=0)
+    snr_gif_three = arr_to_gif(tsnr_cut, 3, picgifs_output_dir, '{}_cut_snr_3'.format(input_prefix), prog_rows_flag=0)
 
     #Write out the html
     print('Writing output html file...')
