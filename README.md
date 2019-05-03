@@ -17,7 +17,7 @@ This script reads in a 4D .nii or .nii.gz file, creates gifs that visualize:
 
 ### Running the Script
 1. Navigate to the directory containing mri_quickgifs.py (if it's not in your python path).
-2. ```python mri_quickgifs.py INPUT_FILE [OUTPUT_DIR]```
+2. ```python mri_quickgifs.py [--cuttrs INT] INPUT_FILE [OUTPUT_DIR]```
 3. The script should take on the order of 30 seconds to run (depending on the size of the input data).
 
 INPUT_FILE: full path and file name of your 4D .nii or .nii.gz file<br><br>

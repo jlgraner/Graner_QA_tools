@@ -46,6 +46,7 @@ import imageio
 parser=argparse.ArgumentParser(
     description='''Generate quick visualization of input image and some basic statistical volumes. ''',
     usage='python3 -m mri_quickgifs raw_input_file [output_dir]')
+parser.add_argument('--cuttrs', help='set number of trs to exclude (i.e. pre-steady-state trs)', default=0)
 parser.add_argument('raw_input_file', help='path and filename of a 4D .nii or .nii.gz')
 parser.add_argument('output_dir', nargs='?', default=None, help='where things will get written. If not provided, uses current working dir')
 args = parser.parse_args()
@@ -116,7 +117,7 @@ def _try_delete(file_to_go):
         os.remove(file_to_go)
 
 
-def _write_html(input_prefix, output_dir):
+def _write_html(input_prefix, output_dir, cuttrs):
     #Write out an html file to display the various gifs created.
     #For now, just assume a static set of gifs.
 
@@ -130,7 +131,7 @@ def _write_html(input_prefix, output_dir):
     '<TITLE>mri_quickgifs Summary</TITLE>',
     '</HEAD>',
     '<BODY>',
-    '<H1>Note: The first 4 TRs were removed from the data before creating these movies!</H1>',
+    '<H1>Note: The first {} TRs were removed from the data before creating these movies.</H1>'.format(cuttrs),
     '<H2>fMRI Center Slices Over Time</H2>',
     '<br>',
     '<IMAGE SRC=".\pictures_gifs\{}_center_x_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
@@ -213,6 +214,9 @@ def arr_to_gif(input_array, slice_dim, output_dir, output_gif_prefix, prog_rows_
 
 def main(args):
 
+    #Extract the number of TRs to cut (default is 0)
+    cuttrs = int(args.cuttrs)
+
     #Extract the passed argument as the input file
     raw_input_file=args.raw_input_file
 
@@ -243,15 +247,15 @@ def main(args):
     #Set some output subdirectories and create them if they're not there
     picgifs_output_dir = os.path.join(output_dir, 'pictures_gifs')
     if not os.path.exists(picgifs_output_dir):
-        print('Creating asset output directory: {}'.format(element))
-        os.mkdir(element)
+        print('Creating asset output directory: {}'.format(picgifs_output_dir))
+        os.mkdir(picgifs_output_dir)
 
     #Read the input file in as a nibabel image object
     input_img = nib.load(input_func_data)
     input_data = input_img.get_data()
     ##TODO: Check the shape of the input data (should be 4D)
-    print('Removing first 4 timepoints...')
-    cut_data = input_data[:,:,:,4:]
+    print('Removing first {} timepoints...'.format(cuttrs))
+    cut_data = input_data[:,:,:,cuttrs:]
 
     #Detrend data and create temporal standard deviation images
     print('Detrending input data...')
@@ -315,7 +319,7 @@ def main(args):
 
     #Write out the html
     print('Writing output html file...')
-    output_html = _write_html(input_prefix, output_dir)
+    output_html = _write_html(input_prefix, output_dir, cuttrs)
     if output_html is None:
         print('Something went wrong creating html file! -- mri_quickgifs.main()')
         raise RuntimeError
