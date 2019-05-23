@@ -1,6 +1,6 @@
 # Graner_QA_tools
 
-This repository is meant to house some basic MRI quality assurance tools.
+This repository is meant to house some basic MRI quality assurance tools. Each sub-directory has its own README for specific information on the code contained therein.
 
 ## mri_quickgifs.py
 This script reads in a 4D .nii or .nii.gz file and creates some gifs for very basic visual QA.
