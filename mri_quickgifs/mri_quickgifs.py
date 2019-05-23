@@ -301,21 +301,21 @@ def main(args):
 
     ##Create gifs going through the mean image in each dimension
     print('Creating temporal mean gifs...')
-    mean_gif_one = arr_to_gif(mean_cut, 1, picgifs_output_dir, '{}_cut_mean_1'.format(input_prefix), prog_rows_flag=0)
-    mean_gif_two = arr_to_gif(mean_cut, 2, picgifs_output_dir, '{}_cut_mean_2'.format(input_prefix), prog_rows_flag=0)
-    mean_gif_three = arr_to_gif(mean_cut, 3, picgifs_output_dir, '{}_cut_mean_3'.format(input_prefix), prog_rows_flag=0)
+    mean_gif_one = arr_to_gif(mean_cut, 1, picgifs_output_dir, '{}_cut_mean'.format(input_prefix), prog_rows_flag=0)
+    mean_gif_two = arr_to_gif(mean_cut, 2, picgifs_output_dir, '{}_cut_mean'.format(input_prefix), prog_rows_flag=0)
+    mean_gif_three = arr_to_gif(mean_cut, 3, picgifs_output_dir, '{}_cut_mean'.format(input_prefix), prog_rows_flag=0)
 
     #Create gifs going through the stdev image
     print('Creating temporal standard deviation gifs...')
-    stdev_gif_one = arr_to_gif(stdev_cut, 1, picgifs_output_dir, '{}_cut_stdev_1'.format(input_prefix), prog_rows_flag=0)
-    stdev_gif_two = arr_to_gif(stdev_cut, 2, picgifs_output_dir, '{}_cut_stdev_2'.format(input_prefix), prog_rows_flag=0)
-    stdev_gif_three = arr_to_gif(stdev_cut, 3, picgifs_output_dir, '{}_cut_stdev_3'.format(input_prefix), prog_rows_flag=0)
+    stdev_gif_one = arr_to_gif(stdev_cut, 1, picgifs_output_dir, '{}_cut_stdev'.format(input_prefix), prog_rows_flag=0)
+    stdev_gif_two = arr_to_gif(stdev_cut, 2, picgifs_output_dir, '{}_cut_stdev'.format(input_prefix), prog_rows_flag=0)
+    stdev_gif_three = arr_to_gif(stdev_cut, 3, picgifs_output_dir, '{}_cut_stdev'.format(input_prefix), prog_rows_flag=0)
 
     #Create gifs going through the snr image
     print('Creating temporal SNR gifs...')
-    snr_gif_one = arr_to_gif(tsnr_cut, 1, picgifs_output_dir, '{}_cut_snr_1'.format(input_prefix), prog_rows_flag=0)
-    snr_gif_two = arr_to_gif(tsnr_cut, 2, picgifs_output_dir, '{}_cut_snr_2'.format(input_prefix), prog_rows_flag=0)
-    snr_gif_three = arr_to_gif(tsnr_cut, 3, picgifs_output_dir, '{}_cut_snr_3'.format(input_prefix), prog_rows_flag=0)
+    snr_gif_one = arr_to_gif(tsnr_cut, 1, picgifs_output_dir, '{}_cut_snr'.format(input_prefix), prog_rows_flag=0)
+    snr_gif_two = arr_to_gif(tsnr_cut, 2, picgifs_output_dir, '{}_cut_snr'.format(input_prefix), prog_rows_flag=0)
+    snr_gif_three = arr_to_gif(tsnr_cut, 3, picgifs_output_dir, '{}_cut_snr'.format(input_prefix), prog_rows_flag=0)
 
     #Write out the html
     print('Writing output html file...')
