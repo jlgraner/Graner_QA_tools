@@ -12,8 +12,9 @@ This script reads in a 4D .nii or .nii.gz file, creates gifs that visualize:
 1. Clone/download the repository and save it somewhere in your python path or a place from which you can run python scripts. (Setup file creation is on the TODO list.)
 2. Navigate to the repository directory and run ```pip install -r requirements.txt```
 
-### Installation via Docker
-#### UNDER CONSTRUCTION
+### Installation via Docker (It might be on DockerHub some day. But, for now...)
+1. Clone/download the repository.
+2. Navigate to the repository directory and run ```docker build --rm -t jlgraner/mri_quickgifs:latest .```
 
 ### Running the Script
 1. Navigate to the directory containing mri_quickgifs.py (if it's not in your python path).
@@ -22,6 +23,11 @@ This script reads in a 4D .nii or .nii.gz file, creates gifs that visualize:
 
 INPUT_FILE: full path and file name of your 4D .nii or .nii.gz file<br><br>
 OUTPUT_DIR (optional): full path to where you'd like mri_quickgifs to save the resulting gifs and html file. If no value is provided, the script defaults to the directory of the input image. NOTE: in either case the script will create a new "quickgifs" directory inside the output directory.
+
+### Running the Script with Docker
+1. Just run: ```docker run --rm -v INPUT_DIR:/data:ro -v OUTPUT_DIR:/out jlgraner/mri_quickgifs:latest /data/INPUT_FILE [--cuttrs INT] /out```
+
+INPUT_DIR: full path of the directory containing the image file you want to visualize
 
 ### Output
 The primary output of the script is an html file in .../OUTPUT_DIR/quickgifs/ that will display the gif movies mentioned in the description above. The gifs themselves will be saved in .../OUTPUT_DIR/quickgifs/pictures_gifs/.
