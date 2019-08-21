@@ -86,10 +86,17 @@ def _get_niiprefext(input_nii):
     return input_prefix, extension
 
 
-def _grayscale_conv(input_array):
+def _grayscale_conv(input_array, perc=None):
     #Convert an input array to 0-255 to support
     #grayscale png output
-    gs_array = 255*(input_array/input_array.max())
+    if perc is not None:
+        max_val = np.percentile(input_array, perc)
+    else:
+        max_val = input_array.max()
+
+    gs_array = 255*(input_array/max_val)
+    gs_array[np.where(gs_array>255)] = 255
+
     gs_array = np.rint(gs_array)
     return gs_array
 
@@ -170,7 +177,7 @@ def _write_html(input_prefix, output_dir, cuttrs):
 
 def arr_to_gif(input_array, slice_dim, output_dir, output_gif_prefix, prog_rows_flag=0):
     #Scale the image to 0-255
-    input_array = _grayscale_conv(input_array)
+    input_array = _grayscale_conv(input_array, perc=99.95)
 
     #Transpose the data so we can always create slices along the
     #last dimension of the array.
