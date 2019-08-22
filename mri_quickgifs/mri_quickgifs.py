@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3
 
 ##############################################################
 #Description: generate some quick gifs of an input image and a few QC derivatives
