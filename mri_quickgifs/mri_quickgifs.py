@@ -175,7 +175,7 @@ def _write_html(input_prefix, output_dir, cuttrs):
     return output_file
 
 
-def arr_to_gif(input_array, slice_dim, output_dir, output_gif_prefix, prog_rows_flag=0):
+def arr_to_gif(input_array, slice_dim, output_dir, output_gif_prefix, prog_rows_flag=0, duration=0.1):
     #Scale the image to 0-255
     input_array = _grayscale_conv(input_array, perc=99.95)
 
@@ -212,7 +212,7 @@ def arr_to_gif(input_array, slice_dim, output_dir, output_gif_prefix, prog_rows_
     for filename in slice_files:
         images.append(imageio.imread(filename))
     output_gif = os.path.join(output_dir, '{prefix}_{dim}.gif'.format(prefix=output_gif_prefix,dim=slice_dim))
-    imageio.mimsave(output_gif, images, duration=0.1)
+    imageio.mimsave(output_gif, images, duration=duration)
     #Delete pngs
     for filename in slice_files:
         _try_delete(filename)
@@ -308,21 +308,21 @@ def main(args):
 
     ##Create gifs going through the mean image in each dimension
     print('Creating temporal mean gifs...')
-    mean_gif_one = arr_to_gif(mean_cut, 1, picgifs_output_dir, '{}_cut_mean'.format(input_prefix), prog_rows_flag=0)
-    mean_gif_two = arr_to_gif(mean_cut, 2, picgifs_output_dir, '{}_cut_mean'.format(input_prefix), prog_rows_flag=0)
-    mean_gif_three = arr_to_gif(mean_cut, 3, picgifs_output_dir, '{}_cut_mean'.format(input_prefix), prog_rows_flag=0)
+    mean_gif_one = arr_to_gif(mean_cut, 1, picgifs_output_dir, '{}_cut_mean'.format(input_prefix), prog_rows_flag=0, duration=0.2)
+    mean_gif_two = arr_to_gif(mean_cut, 2, picgifs_output_dir, '{}_cut_mean'.format(input_prefix), prog_rows_flag=0, duration=0.2)
+    mean_gif_three = arr_to_gif(mean_cut, 3, picgifs_output_dir, '{}_cut_mean'.format(input_prefix), prog_rows_flag=0, duration=0.2)
 
     #Create gifs going through the stdev image
     print('Creating temporal standard deviation gifs...')
-    stdev_gif_one = arr_to_gif(stdev_cut, 1, picgifs_output_dir, '{}_cut_stdev'.format(input_prefix), prog_rows_flag=0)
-    stdev_gif_two = arr_to_gif(stdev_cut, 2, picgifs_output_dir, '{}_cut_stdev'.format(input_prefix), prog_rows_flag=0)
-    stdev_gif_three = arr_to_gif(stdev_cut, 3, picgifs_output_dir, '{}_cut_stdev'.format(input_prefix), prog_rows_flag=0)
+    stdev_gif_one = arr_to_gif(stdev_cut, 1, picgifs_output_dir, '{}_cut_stdev'.format(input_prefix), prog_rows_flag=0, duration=0.2)
+    stdev_gif_two = arr_to_gif(stdev_cut, 2, picgifs_output_dir, '{}_cut_stdev'.format(input_prefix), prog_rows_flag=0, duration=0.2)
+    stdev_gif_three = arr_to_gif(stdev_cut, 3, picgifs_output_dir, '{}_cut_stdev'.format(input_prefix), prog_rows_flag=0, duration=0.2)
 
     #Create gifs going through the snr image
     print('Creating temporal SNR gifs...')
-    snr_gif_one = arr_to_gif(tsnr_cut, 1, picgifs_output_dir, '{}_cut_snr'.format(input_prefix), prog_rows_flag=0)
-    snr_gif_two = arr_to_gif(tsnr_cut, 2, picgifs_output_dir, '{}_cut_snr'.format(input_prefix), prog_rows_flag=0)
-    snr_gif_three = arr_to_gif(tsnr_cut, 3, picgifs_output_dir, '{}_cut_snr'.format(input_prefix), prog_rows_flag=0)
+    snr_gif_one = arr_to_gif(tsnr_cut, 1, picgifs_output_dir, '{}_cut_snr'.format(input_prefix), prog_rows_flag=0, duration=0.2)
+    snr_gif_two = arr_to_gif(tsnr_cut, 2, picgifs_output_dir, '{}_cut_snr'.format(input_prefix), prog_rows_flag=0, duration=0.2)
+    snr_gif_three = arr_to_gif(tsnr_cut, 3, picgifs_output_dir, '{}_cut_snr'.format(input_prefix), prog_rows_flag=0, duration=0.2)
 
     #Write out the html
     print('Writing output html file...')
