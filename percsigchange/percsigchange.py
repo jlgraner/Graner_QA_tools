@@ -6,15 +6,6 @@ import subprocess
 import argparse
 
 
-#Set up argument parser and help dialogue
-parser=argparse.ArgumentParser(
-    description='''Generate a percent signal change image for a specific PE of a FEAT design. ''',
-    usage='python3 -m percsigchange feat_dir pe_index [output_dir]')
-parser.add_argument('feat_dir', help='.feat directory of the analysis')
-parser.add_argument('pe_index', help='index number of a PE in the design you wish to calculate a percent signal change map for (index begins at 1)')
-parser.add_argument('output_dir', nargs='?', default=None, help='where things will get written. If not provided, use feat directory')
-args = parser.parse_args()
-
 
 def __add_prefix(input_file, prefix):
     #This function appends a string to the existing prefix of an image file.
@@ -146,4 +137,12 @@ def main(args):
 
 
 if __name__ == "__main__":
+    #Set up argument parser and help dialogue
+    parser=argparse.ArgumentParser(
+        description='''Generate a percent signal change image for a specific PE of a FEAT design. ''',
+        usage='python3 -m percsigchange feat_dir pe_index [output_dir]')
+    parser.add_argument('feat_dir', help='.feat directory of the analysis')
+    parser.add_argument('pe_index', help='index number of a PE in the design you wish to calculate a percent signal change map for (index begins at 1)')
+    parser.add_argument('output_dir', nargs='?', default=None, help='where things will get written. If not provided, use feat directory')
+    args = parser.parse_args()
     main(args)
