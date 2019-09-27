@@ -31,7 +31,6 @@ def calc_perc_change(input_pe_file, mean_func_file, pe_range, output_dir):
                  '-mul', '100.0',
                  perc_change_file
                  ]
-
     try:
         calc_output = subprocess.run(calc_call, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as err:
@@ -73,7 +72,7 @@ def calc_pe_scale(designmat_file, pe_index):
     return pe_range
 
 
-def generate_map(feat_dir, pe_index, output_dir=None):
+def generate_map(feat_dir, pe_index, output_dir=None, event_height=None):
 
     #Make sure the feat_dir exists
     print('Checking feat directory...')
@@ -90,12 +89,6 @@ def generate_map(feat_dir, pe_index, output_dir=None):
     if output_dir is None:
         output_dir = feat_dir
 
-    #Find and check the design.mat file
-    print('Checking design.mat file...')
-    designmat_file = os.path.join(feat_dir, 'design.mat')
-    if not os.path.exists(designmat_file):
-        raise RuntimeError('design.mat file cannot be found: {}'.format(designmat_file))
-
     #Find and check the desired /stats/pe??.nii.gz file
     print('Checking PE image file...')
     input_pe_file = os.path.join(feat_dir, 'stats', 'pe{}.nii.gz'.format(pe_index))
@@ -108,11 +101,21 @@ def generate_map(feat_dir, pe_index, output_dir=None):
     if not os.path.exists(mean_func_file):
         raise RuntimeError('mean functional image file cannot be found: {}'.format(mean_func_file))
 
-    #Calculate the pe design range
-    print('Calculating PE design model range...')
-    pe_range = calc_pe_scale(designmat_file, pe_index)
-    if pe_range is None:
-        raise RuntimeError('Error calculating PE range!')
+    if event_height is None:
+        #Find and check the design.mat file
+        print('Checking design.mat file...')
+        designmat_file = os.path.join(feat_dir, 'design.mat')
+        if not os.path.exists(designmat_file):
+            raise RuntimeError('design.mat file cannot be found: {}'.format(designmat_file))
+
+        #Calculate the pe design range
+        print('Calculating PE design model range...')
+        pe_range = calc_pe_scale(designmat_file, pe_index)
+        if pe_range is None:
+            raise RuntimeError('Error calculating PE range!')
+    else:
+        print('Event height passed: {:.5f}'.format(event_height))
+        pe_range = float(event_height)
 
     #Create percent signal change image
     print('Creating percent signal change image...')
@@ -132,8 +135,12 @@ def main(args):
         output_dir = str(args.output_dir)
     else:
         output_dir = args.output_dir
+    if args.event_height is not None:
+        event_height = float(args.event_height)
+    else:
+        event_height = None
 
-    generate_map(feat_dir, pe_index, output_dir=output_dir)
+    generate_map(feat_dir, pe_index, output_dir=output_dir, event_height=event_height)
 
 
 if __name__ == "__main__":
@@ -141,6 +148,7 @@ if __name__ == "__main__":
     parser=argparse.ArgumentParser(
         description='''Generate a percent signal change image for a specific PE of a FEAT design. ''',
         usage='python3 -m percsigchange feat_dir pe_index [output_dir]')
+    parser.add_argument('--event_height', help='height of a single event, as modeled by FSL; if not passed, it will be set as the max of the EV minus the min of the EV in the design matrix', default=None)
     parser.add_argument('feat_dir', help='.feat directory of the analysis')
     parser.add_argument('pe_index', help='index number of a PE in the design you wish to calculate a percent signal change map for (index begins at 1)')
     parser.add_argument('output_dir', nargs='?', default=None, help='where things will get written. If not provided, use feat directory')
