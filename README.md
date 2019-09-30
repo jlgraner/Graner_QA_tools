@@ -10,3 +10,7 @@ It produces gifs of:
 2. All slices across each axis for the temporal mean image, the temporal standard deviation image, and the temporal SNR image.
 3. The same as number 2 but calculated after the first 4 time points of the image have been removed (to possibly account for non-steady state TRs).
 
+## percsigchange.py
+This script reads in various things from a FEAT output directory and calculates the voxel-wise percent signal change for a given EV of the design matrix.
+<br>
+Output is a 3D NIFTI image.
