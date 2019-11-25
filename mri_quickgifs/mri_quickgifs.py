@@ -47,6 +47,8 @@ parser=argparse.ArgumentParser(
     description='''Generate quick visualization of input image and some basic statistical volumes. ''',
     usage='python3 -m mri_quickgifs raw_input_file [output_dir]')
 parser.add_argument('--cuttrs', help='set number of trs to exclude (i.e. pre-steady-state trs)', default=0)
+parser.add_argument('--saveimages', help='do not delete intermediate image files (this will drastically increase the size of the output)',
+                     action='store_const', const=1, default=0)
 parser.add_argument('raw_input_file', help='path and filename of a 4D .nii or .nii.gz')
 parser.add_argument('output_dir', nargs='?', default=None, help='where things will get written. If not provided, uses current working dir')
 args = parser.parse_args()
@@ -227,6 +229,11 @@ def main(args):
     #Extract the passed argument as the input file
     raw_input_file=args.raw_input_file
 
+    #Set flag for saving intermediate images
+    save_int = args.saveimages
+    if save_int:
+        print('--saveimages set; will output intermediate images...')
+
     #If the input file name wasn't passed with a path, append the
     #current working directory.
     input_func_data = _format_input_file(raw_input_file)
@@ -256,6 +263,10 @@ def main(args):
     if not os.path.exists(picgifs_output_dir):
         print('Creating asset output directory: {}'.format(picgifs_output_dir))
         os.mkdir(picgifs_output_dir)
+    saveint_output_dir = os.path.join(output_dir, 'intermediate_images')
+    if save_int:
+        print('Creating intermediate image output directory: {}'.format(saveint_output_dir))
+        os.mkdir(saveint_output_dir)
 
     #Read the input file in as a nibabel image object
     input_img = nib.load(input_func_data)
