@@ -221,16 +221,17 @@ def arr_to_gif(input_array, slice_dim, output_dir, output_gif_prefix, prog_rows_
     return output_gif
 
 
-def main(args):
+# def main(args):
+def main(cuttrs, raw_input_file, save_int, output_dir):
 
     #Extract the number of TRs to cut (default is 0)
-    cuttrs = int(args.cuttrs)
+    # cuttrs = int(args.cuttrs)
 
     #Extract the passed argument as the input file
-    raw_input_file=args.raw_input_file
+    # raw_input_file=args.raw_input_file
 
     #Set flag for saving intermediate images
-    save_int = args.saveimages
+    # save_int = args.saveimages
     if save_int:
         print('--saveimages set; will output intermediate images...')
 
@@ -243,9 +244,9 @@ def main(args):
     quickgifs_dir = 'quickgifs_{}'.format(input_prefix)
 
     #See if an output directory was passed.
-    if args.output_dir is not None:
+    if output_dir is not None:
         #Get passed output directory
-        dir_to_test = args.output_dir
+        dir_to_test = output_dir
     else:
         #Set the output directory to the path of the input file
         dir_to_test = os.path.join(os.path.split(input_func_data)[0])
@@ -346,4 +347,17 @@ def main(args):
     print('-------------------------------------------------')
 
 if __name__ == "__main__":
-    main(args)
+    #Extract the number of TRs to cut (default is 0)
+    cuttrs = int(args.cuttrs)
+
+    #Extract the passed argument as the input file
+    raw_input_file = args.raw_input_file
+
+    #Set flag for saving intermediate images
+    save_int = args.saveimages
+
+    #Extract passed argument as output dir
+    output_dir = args.output_dir
+
+    main(cuttrs, raw_input_file, save_int, output_dir)
+    # main(args)
