@@ -42,8 +42,7 @@ class quickgifs_gui():
 
         self.dummytr_lbl.grid(row=0, column=0, sticky='w')
         self.dummytr_entry.grid(row=0, column=1, sticky='w')
-        self.save_cbtn.grid(row=1, column=0, sticky='w')
-
+        # self.save_cbtn.grid(row=1, column=0, sticky='w')
 
         #Create frame for response buttons
         self.frame_responses = tk.Frame()
@@ -51,6 +50,11 @@ class quickgifs_gui():
         self.quit_btn = tk.Button(self.frame_responses, text='Quit', command=self.gui_quit_btn)
         self.go_btn.grid(row=0, column=0, sticky='w')
         self.quit_btn.grid(row=0, column=1, sticky='w')
+
+        #Put all the frames into the GUI window
+        self.frame_files.pack(fill=tk.X, expand=True)
+        self.frame_options.pack(fill=tk.X, expand=True)
+        self.frame_responses.pack(fill=tk.X, expand=True)
 
 
     def run_loop(self):
@@ -74,15 +78,17 @@ class quickgifs_gui():
 
 
     def gui_run_btn(self):
-        #Pull variables from the GUI and check them
+        #Pull variables from the GUI
         try:
             raw_input_file = str(self.inputfile_var.get())
             cuttrs = int(self.dummytr_var.get())
-            saveimages = int(self.save_var.get())
+            save_int = int(self.save_var.get())
             output_dir = str(self.outdir_var.get())
 
-            ###TODO: finish this###
-
+            #Pass the input arguments to mri_quickgifs main()
+            mquick.main(cuttrs, raw_input_file, save_int, output_dir)
+        except Exception as ex:
+            print(ex)
 
 
 if __name__ == '__main__':

@@ -42,16 +42,6 @@ import numpy as np
 from scipy import signal
 import imageio
 
-#Set up argument parser and help dialogue
-parser=argparse.ArgumentParser(
-    description='''Generate quick visualization of input image and some basic statistical volumes. ''',
-    usage='python3 -m mri_quickgifs raw_input_file [output_dir]')
-parser.add_argument('--cuttrs', help='set number of trs to exclude (i.e. pre-steady-state trs)', default=0)
-parser.add_argument('--saveimages', help='do not delete intermediate image files (this will drastically increase the size of the output)',
-                     action='store_const', const=1, default=0)
-parser.add_argument('raw_input_file', help='path and filename of a 4D .nii or .nii.gz')
-parser.add_argument('output_dir', nargs='?', default=None, help='where things will get written. If not provided, uses current working dir')
-args = parser.parse_args()
 
 
 def _format_input_file(raw_input_file):
@@ -347,6 +337,18 @@ def main(cuttrs, raw_input_file, save_int, output_dir):
     print('-------------------------------------------------')
 
 if __name__ == "__main__":
+    
+    #Set up argument parser and help dialogue
+    parser=argparse.ArgumentParser(
+        description='''Generate quick visualization of input image and some basic statistical volumes. ''',
+        usage='python3 -m mri_quickgifs raw_input_file [output_dir]')
+    parser.add_argument('--cuttrs', help='set number of trs to exclude (i.e. pre-steady-state trs)', default=0)
+    parser.add_argument('--saveimages', help='do not delete intermediate image files (this will drastically increase the size of the output)',
+                         action='store_const', const=1, default=0)
+    parser.add_argument('raw_input_file', help='path and filename of a 4D .nii or .nii.gz')
+    parser.add_argument('output_dir', nargs='?', default=None, help='where things will get written. If not provided, uses current working dir')
+    args = parser.parse_args()
+
     #Extract the number of TRs to cut (default is 0)
     cuttrs = int(args.cuttrs)
 
