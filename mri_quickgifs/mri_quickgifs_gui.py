@@ -27,8 +27,8 @@ class quickgifs_gui():
         self.input_file_entry.grid(row=0, column=1, sticky='w')
         self.input_file_btn.grid(row=0, column=2, sticky='w')
         self.out_dir_lbl.grid(row=1, column=0, sticky='w')
-        self.out_dir_entry.grid(rows=1, column=1, sticky='w')
-        self.out_dir_btn.grid(rows=1, column=2, sticky='w')
+        self.out_dir_entry.grid(row=1, column=1, sticky='w')
+        self.out_dir_btn.grid(row=1, column=2, sticky='w')
 
         #Create frame for options
         self.frame_options = tk.Frame()
