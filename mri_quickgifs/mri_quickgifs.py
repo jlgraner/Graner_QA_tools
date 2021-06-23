@@ -116,13 +116,15 @@ def _try_delete(file_to_go):
         os.remove(file_to_go)
 
 
-def _write_html(input_prefix, output_dir, cuttrs):
+def _write_html(input_prefix, output_dir, cuttrs, scale_dict):
     #Write out an html file to display the various gifs created.
     #For now, just assume a static set of gifs.
 
     if not os.path.exists(output_dir):
         print('Output directory not found: {} -- _write_html()'.format(output_dir))
         return None
+
+    height = 200
 
     line_list = [
     '<HTML>', 
@@ -133,27 +135,27 @@ def _write_html(input_prefix, output_dir, cuttrs):
     '<H1>Note: The first {} TRs were removed from the data before creating these movies.</H1>'.format(cuttrs),
     '<H2>fMRI Center Slices Over Time</H2>',
     '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_center_x_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_center_y_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_center_z_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_center_x_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['yz_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_center_y_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['xz_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_center_z_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['xy_scale']),
     '<br>',
     '<H2>Mean Image</H2>',
     '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_1.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['yz_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_2.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['xz_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['xy_scale']),
     '<br>',
     '<H2>Standard Deviation Image</H2>',
     '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_1.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['yz_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_2.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['xz_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['xy_scale']),
     '<br>',
     '<H2>Temporal SNR Image</H2>',
     '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_1.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_2.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_3.gif" HEIGHT=200 ALT="gif_test">'.format(input_prefix),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_1.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['yz_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_2.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['xz_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['xy_scale']),
     '<br>',
     '</BODY>',
     '</HTML>'
@@ -266,6 +268,14 @@ def main(cuttrs, raw_input_file, save_int, output_dir):
     print('Removing first {} timepoints...'.format(cuttrs))
     cut_data = input_data[:,:,:,cuttrs:]
 
+    #Get the voxel sizes in mm
+    input_header = input_img.header
+    vox_sizes = input_header.get_zooms()[:3]
+    scale_dict = {}
+    scale_dict['xy_scale'] = vox_sizes[0]/vox_sizes[1]
+    scale_dict['xz_scale']= vox_sizes[0]/vox_sizes[2]
+    scale_dict['yz_scale'] = vox_sizes[1]/vox_sizes[2]
+
     #Detrend data and create temporal standard deviation images
     print('Detrending input data...')
     detrend_data = signal.detrend(input_data, axis=3, type='linear')
@@ -328,7 +338,7 @@ def main(cuttrs, raw_input_file, save_int, output_dir):
 
     #Write out the html
     print('Writing output html file...')
-    output_html = _write_html(input_prefix, output_dir, cuttrs)
+    output_html = _write_html(input_prefix, output_dir, cuttrs, scale_dict)
     if output_html is None:
         print('Something went wrong creating html file! -- mri_quickgifs.main()')
         raise RuntimeError
