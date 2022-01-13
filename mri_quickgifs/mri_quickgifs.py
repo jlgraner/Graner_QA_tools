@@ -135,27 +135,27 @@ def _write_html(input_prefix, output_dir, cuttrs, scale_dict):
     '<H1>Note: The first {} TRs were removed from the data before creating these movies.</H1>'.format(cuttrs),
     '<H2>fMRI Center Slices Over Time</H2>',
     '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_center_x_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['yz_scale']),
-    '<IMAGE SRC=".\pictures_gifs\{}_center_y_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['xz_scale']),
-    '<IMAGE SRC=".\pictures_gifs\{}_center_z_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['xy_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_center_x_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height*scale_dict['yz_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_center_y_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height*scale_dict['xz_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_center_z_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height*scale_dict['xy_scale']),
     '<br>',
     '<H2>Mean Image</H2>',
     '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_1.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['yz_scale']),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_2.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['xz_scale']),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['xy_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_1.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height*scale_dict['yz_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_2.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height*scale_dict['xz_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_mean_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height*scale_dict['xy_scale']),
     '<br>',
     '<H2>Standard Deviation Image</H2>',
     '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_1.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['yz_scale']),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_2.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['xz_scale']),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['xy_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_1.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height*scale_dict['yz_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_2.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height*scale_dict['xz_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_stdev_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height*scale_dict['xy_scale']),
     '<br>',
     '<H2>Temporal SNR Image</H2>',
     '<br>',
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_1.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['yz_scale']),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_2.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['xz_scale']),
-    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height/scale_dict['xy_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_1.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height*scale_dict['yz_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_2.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height*scale_dict['xz_scale']),
+    '<IMAGE SRC=".\pictures_gifs\{}_cut_snr_3.gif" HEIGHT={} WIDTH={} ALT="gif_test">'.format(input_prefix,height,height*scale_dict['xy_scale']),
     '<br>',
     '</BODY>',
     '</HTML>'
@@ -268,13 +268,18 @@ def main(cuttrs, raw_input_file, save_int, output_dir):
     print('Removing first {} timepoints...'.format(cuttrs))
     cut_data = input_data[:,:,:,cuttrs:]
 
+    #Get the number of voxels in each dimension
+    img_dims = cut_data.shape
+
     #Get the voxel sizes in mm
     input_header = input_img.header
     vox_sizes = input_header.get_zooms()[:3]
     scale_dict = {}
-    scale_dict['xy_scale'] = vox_sizes[0]/vox_sizes[1]
-    scale_dict['xz_scale']= vox_sizes[0]/vox_sizes[2]
-    scale_dict['yz_scale'] = vox_sizes[1]/vox_sizes[2]
+    scale_dict['xy_scale'] = (vox_sizes[0]*img_dims[0])/(vox_sizes[1]*img_dims[1])
+    scale_dict['xz_scale']= (vox_sizes[0]*img_dims[1])/(vox_sizes[2]*img_dims[2])
+    scale_dict['yz_scale'] = (vox_sizes[1]*img_dims[1])/(vox_sizes[2]*img_dims[2])
+    print('scale_dict: {}'.format(scale_dict))
+    print('vox_sizes: {}'.format(vox_sizes))
 
     #Detrend data and create temporal standard deviation images
     print('Detrending input data...')
@@ -298,7 +303,6 @@ def main(cuttrs, raw_input_file, save_int, output_dir):
 
     ##Create gifs that go through the center slices at each timepoint##
     #Get the center slice number of each dimension
-    img_dims = cut_data.shape
     center_x = round(img_dims[0] / 2.0)
     center_y = round(img_dims[1] / 2.0)
     center_z = round(img_dims[2] / 2.0)
